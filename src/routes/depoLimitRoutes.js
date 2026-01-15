@@ -7,9 +7,9 @@ const router = express.Router();
  * @swagger
  * /api/depolimits:
  *   get:
- *     summary: Получить список депозитарных лимитов
+ *     summary: Получить список позиций по инструментам
  *     tags: [DepoLimits]
- *     description: Возвращает список всех депозитарных лимитов из базы данных
+ *     description: Возвращает список всех позиций по инструментам
  *     responses:
  *       200:
  *         description: Успешный ответ
