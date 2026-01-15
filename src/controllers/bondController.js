@@ -1,24 +1,31 @@
 // controllers/instrumentsController.js
 import Security from "../models/Security.js";
+import pgPool from "../config/dbPostgres.js";
 import { z } from "zod";
 import { getMssqlPool, sql } from "../config/dbMssql.js";
-import { Op } from "sequelize";
 
 /* =========================
    GET /instruments
    ========================= */
 export async function getInstruments(req, res, next) {
     try {
-        const securities = await Security.findAll({
-            where: {
-                [Op.or]: [
-                    { ClassCode: { [Op.like]: '%GD%' } },
-                    { ClassCode: { [Op.like]: '%GBA%' } }
-                ]
-            },
-            order: [["TradeDate", "DESC"]],
-        });
-        res.json(securities);
+        const { ClassCode, SecCode } = req.query;
+        const conditions = [];
+        const params = [];
+
+        if (ClassCode) {
+            params.push(ClassCode);
+            conditions.push(`"ClassCode" = $${params.length}`);
+        }
+        if (SecCode) {
+            params.push(SecCode);
+            conditions.push(`"SecCode" = $${params.length}`);
+        }
+
+        const whereClause = conditions.length ? ` WHERE ${conditions.join(" AND ")}` : "";
+        const query = `SELECT * FROM public."Securities"${whereClause} ORDER BY "TradeDate" DESC`;
+        const result = await pgPool.query(query, params);
+        res.json(result.rows);
     } catch (err) {
         next(err);
     }
