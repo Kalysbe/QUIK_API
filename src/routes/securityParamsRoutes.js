@@ -7,6 +7,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: SecurityParams
+ *   x-hidden: true
  *   description: API для управления параметрами инструментов
  */
 

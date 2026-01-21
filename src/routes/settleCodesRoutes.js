@@ -7,6 +7,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: SettleCodes
+ *   x-hidden: true
  *   description: API для управления кодами расчетов
  */
 

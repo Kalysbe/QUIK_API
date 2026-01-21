@@ -11,6 +11,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: PriceLimits
+ *   x-hidden: true
  *   description: API для управления ограничениями цен
  */
 

@@ -18,7 +18,7 @@ const router = express.Router();
  *     tags: [Coupons]
  *     parameters:
  *       - in: query
- *         name: AssetCode
+ *         name: SecCode
  *         schema:
  *           type: string
  *         required: false

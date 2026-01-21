@@ -50,8 +50,8 @@ async function startServer() {
     await testConnections();
 
     // Запускаем cron job
-    job.start();
-    logger.info("✅ Cron job запущен");
+    // job.start();
+    // logger.info("✅ Cron job запущен");
 
     // Запускаем сервер
     server = app.listen(PORT, HOST, () => {

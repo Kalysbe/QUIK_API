@@ -7,6 +7,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: Securities
+ *   x-hidden: true
  *   description: API для управления инструментами (акции, фьючерсы, валюта, опционы, спреды, цифровые свидетельства)
  */
 
@@ -15,6 +16,7 @@ const router = express.Router();
  * /api/securities/stock:
  *   post:
  *     summary: Добавить/изменить акцию
+ *     x-hidden: true
  *     tags: [Securities]
  *     description: Создает новый или изменяет существующий инструмент типа «Акция» через хранимую процедуру NewSecurity.
  *     requestBody:

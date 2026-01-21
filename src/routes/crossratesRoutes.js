@@ -7,6 +7,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: Crossrates
+ *   x-hidden: true
  *   description: API для управления кросс-курсами
  */
 

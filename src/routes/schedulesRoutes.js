@@ -7,6 +7,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: Schedules
+ *   x-hidden: true
  *   description: API для управления расписаниями торгов
  */
 

@@ -7,6 +7,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: CoreGroups
+ *   x-hidden: true
  *   description: API для управления группами мэтчинговых ядер
  */
 

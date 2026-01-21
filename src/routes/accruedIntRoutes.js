@@ -7,6 +7,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: AccruedInt
+ *   x-hidden: true
  *   description: API для управления НКД
  */
 

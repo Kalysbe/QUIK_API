@@ -1,5 +1,8 @@
 import express from "express";
-import { getMoneyLimits } from "../controllers/moneyLimitController.js";
+import {
+  getMoneyLimits,
+  createMoneyLimitsFile,
+} from "../controllers/moneyLimitController.js";
 
 const router = express.Router();
 
@@ -45,6 +48,68 @@ const router = express.Router();
  *         description: Ошибка сервера
  */
 router.get("/", getMoneyLimits);
+
+/**
+ * @swagger
+ * /api/moneylimits:
+ *   post:
+ *     summary: Сформировать .lim файл для MONEY
+ *     tags: [MoneyLimits]
+ *     description: Принимает массив MONEY-лимитов и формирует файл limits.lim
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: array
+ *             items:
+ *               type: object
+ *               properties:
+ *                 FIRM_ID:
+ *                   type: string
+ *                 TAG:
+ *                   type: string
+ *                 CURR_CODE:
+ *                   type: string
+ *                 CLIENT_CODE:
+ *                   type: string
+ *                 LIMIT_KIND:
+ *                   type: string
+ *                 OPEN_BALANCE:
+ *                   type: string
+ *                 OPEN_LIMIT:
+ *                   type: string
+ *                 LEVERAGE:
+ *                   type: string
+ *           example:
+ *             - FIRM_ID: "2002"
+ *               TAG: "EQTV"
+ *               CURR_CODE: "KGS"
+ *               CLIENT_CODE: "12"
+ *               LIMIT_KIND: "0"
+ *               OPEN_BALANCE: "2000000,00"
+ *               OPEN_LIMIT: "0"
+ *               LEVERAGE: "-1"
+ *     responses:
+ *       200:
+ *         description: Файл успешно сформирован
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 filePath:
+ *                   type: string
+ *                 linesWritten:
+ *                   type: number
+ *       400:
+ *         description: Ошибка валидации данных
+ *       500:
+ *         description: Ошибка сервера
+ */
+router.post("/", createMoneyLimitsFile);
 
 export default router;
 

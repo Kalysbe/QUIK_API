@@ -8,7 +8,7 @@ const router = express.Router();
  * /api/trdaccs:
  *   get:
  *     summary: Получить список торговых счетов
- *     tags: [Trdaccs]
+ *     tags: [TradeAccounts]
  *     description: Возвращает список торговых счетов. Можно фильтровать по FirmId через query параметр
  *     parameters:
  *       - in: query

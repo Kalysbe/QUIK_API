@@ -16,6 +16,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: Calendars
+ *   x-hidden: true
  *   description: API для управления календарями
  */
 

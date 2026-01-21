@@ -1,5 +1,6 @@
 import express from "express";
 import {
+    getClasses,
     createClass,
     createBondClass,
     createFutClass,
@@ -21,8 +22,26 @@ const router = express.Router();
 /**
  * @swagger
  * /api/classes:
+ *   get:
+ *     summary: Получить классы инструментов
+ *     tags: [Classes]
+ *     description: Возвращает данные из таблицы Classes (PostgreSQL) с фильтрацией по query параметрам.
+ *     parameters:
+ *       - in: query
+ *         name: filters
+ *         schema:
+ *           type: string
+ *         description: JSON-строка объекта фильтров
+ *     responses:
+ *       200:
+ *         description: Список классов
+ *       400:
+ *         description: Некорректные параметры фильтрации
+ *       500:
+ *         description: Ошибка сервера
  *   post:
  *     summary: Добавить класс инструментов
+ *     x-hidden: true
  *     tags: [Classes]
  *     description: Создает новый класс инструментов через хранимую процедуру NewClass.
  *     requestBody:
@@ -48,6 +67,7 @@ const router = express.Router();
  *       500:
  *         description: Ошибка сервера
  */
+router.get("/", getClasses);
 router.post("/", createClass);
 
 /**
@@ -55,6 +75,7 @@ router.post("/", createClass);
  * /api/classes/bond:
  *   post:
  *     summary: Добавить класс облигаций
+ *     x-hidden: true
  *     tags: [Classes]
  *     description: Создает новый класс облигаций через хранимую процедуру NewBondClass.
  *     requestBody:
@@ -92,6 +113,7 @@ router.post("/bond", createBondClass);
  * /api/classes/futures:
  *   post:
  *     summary: Добавить класс фьючерсов
+ *     x-hidden: true
  *     tags: [Classes]
  *     description: Создает новый класс фьючерсов через хранимую процедуру NewFutClass.
  *     requestBody:
@@ -124,6 +146,7 @@ router.post("/futures", createFutClass);
  * /api/classes/fx:
  *   post:
  *     summary: Добавить класс валютообмена
+ *     x-hidden: true
  *     tags: [Classes]
  *     description: Создает новый класс валютообмена через хранимую процедуру NewFxClass.
  *     requestBody:
@@ -156,6 +179,7 @@ router.post("/fx", createFxClass);
  * /api/classes/options:
  *   post:
  *     summary: Добавить класс опционов
+ *     x-hidden: true
  *     tags: [Classes]
  *     description: Создает новый класс опционов через хранимую процедуру NewOptClass.
  *     requestBody:
@@ -188,6 +212,7 @@ router.post("/options", createOptClass);
  * /api/classes/spread:
  *   post:
  *     summary: Добавить класс спредов
+ *     x-hidden: true
  *     tags: [Classes]
  *     description: Создает новый класс спредов через хранимую процедуру NewSpreadClass.
  *     requestBody:
@@ -228,6 +253,7 @@ router.post("/spread", createSpreadClass);
  * /api/classes/certificate:
  *   post:
  *     summary: Добавить класс цифровых свидетельств
+ *     x-hidden: true
  *     tags: [Classes]
  *     description: Создает новый класс цифровых свидетельств через хранимую процедуру NewCertificateClass.
  *     requestBody:

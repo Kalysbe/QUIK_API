@@ -7,6 +7,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: Brokers
+ *   x-hidden: true
  *   description: API для управления брокерами
  */
 

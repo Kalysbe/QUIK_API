@@ -1,16 +1,53 @@
 import logger from '../utils/logger.js';
 
+function serializeError(err) {
+  if (!err || typeof err !== 'object') {
+    return err;
+  }
+
+  const serialized = {
+    message: err.message,
+    stack: err.stack,
+    name: err.name
+  };
+
+  const extraKeys = [
+    'code',
+    'errno',
+    'syscall',
+    'address',
+    'port',
+    'path',
+    'host',
+    'hostname',
+    'status',
+    'statusCode'
+  ];
+
+  for (const key of extraKeys) {
+    if (err[key] !== undefined) {
+      serialized[key] = err[key];
+    }
+  }
+
+  if (err.cause) {
+    serialized.cause = serializeError(err.cause);
+  }
+
+  if (Array.isArray(err.errors)) {
+    serialized.errors = err.errors;
+  }
+
+  return serialized;
+}
+
 /**
  * Централизованный обработчик ошибок Express
  */
 export function errorHandler(err, req, res, next) {
   // Логируем ошибку
   logger.error('Unhandled error', {
-    error: {
-      message: err.message,
-      stack: err.stack,
-      name: err.name
-    },
+    error: serializeError(err),
     request: {
       method: req.method,
       url: req.url,
@@ -65,11 +102,7 @@ export function notFoundHandler(req, res, next) {
 export function setupUnhandledRejectionHandler() {
   process.on('unhandledRejection', (reason, promise) => {
     logger.error('Unhandled Promise Rejection', {
-      reason: reason instanceof Error ? {
-        message: reason.message,
-        stack: reason.stack,
-        name: reason.name
-      } : reason,
+      reason: reason instanceof Error ? serializeError(reason) : reason,
       promise: promise.toString()
     });
 
@@ -84,11 +117,7 @@ export function setupUnhandledRejectionHandler() {
 export function setupUncaughtExceptionHandler() {
   process.on('uncaughtException', (error) => {
     logger.error('Uncaught Exception', {
-      error: {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      }
+      error: serializeError(error)
     });
 
     // Даем время на логирование, затем завершаем процесс

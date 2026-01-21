@@ -7,6 +7,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: Tags
+ *   x-hidden: true
  *   description: API для управления кодами позиций
  */
 

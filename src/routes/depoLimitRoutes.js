@@ -1,5 +1,8 @@
 import express from "express";
-import { getDepoLimits } from "../controllers/depoLimitController.js";
+import {
+  getDepoLimits,
+  createDepoLimitsFile,
+} from "../controllers/depoLimitController.js";
 
 const router = express.Router();
 
@@ -43,6 +46,65 @@ const router = express.Router();
  *         description: Ошибка сервера
  */
 router.get("/", getDepoLimits);
+
+/**
+ * @swagger
+ * /api/depolimits:
+ *   post:
+ *     summary: Сформировать .lim файл для DEPO
+ *     tags: [DepoLimits]
+ *     description: Принимает массив DEPO-лимитов и формирует файл limits.lim
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: array
+ *             items:
+ *               type: object
+ *               properties:
+ *                 FIRM_ID:
+ *                   type: string
+ *                 SECCODE:
+ *                   type: string
+ *                 CLIENT_CODE:
+ *                   type: string
+ *                 LIMIT_KIND:
+ *                   type: string
+ *                 OPEN_BALANCE:
+ *                   type: string
+ *                 OPEN_LIMIT:
+ *                   type: string
+ *                 TRDACCID:
+ *                   type: string
+ *           example:
+ *             - FIRM_ID: "2002"
+ *               SECCODE: "GD0528"
+ *               CLIENT_CODE: "12"
+ *               LIMIT_KIND: "0"
+ *               OPEN_BALANCE: "0"
+ *               OPEN_LIMIT: "0"
+ *               TRDACCID: "1-3101-2002"
+ *     responses:
+ *       200:
+ *         description: Файл успешно сформирован
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 filePath:
+ *                   type: string
+ *                 linesWritten:
+ *                   type: number
+ *       400:
+ *         description: Ошибка валидации данных
+ *       500:
+ *         description: Ошибка сервера
+ */
+router.post("/", createDepoLimitsFile);
 
 export default router;
 

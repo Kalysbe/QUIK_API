@@ -7,6 +7,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: ExtraParams
+ *   x-hidden: true
  *   description: API для управления дополнительными параметрами
  */
 
