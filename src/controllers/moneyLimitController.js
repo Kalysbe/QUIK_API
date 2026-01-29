@@ -35,10 +35,15 @@ function formatMoneyLimitLine(item) {
    ========================= */
 export async function getMoneyLimits(req, res, next) {
   try {
-    const moneyLimits = await MoneyLimit.findAll({
-      raw: true, // Возвращает все столбцы как сырые данные
+    const { firmId } = req.query;
+    const options = {
+      raw: true,
       order: [["FirmId", "ASC"]],
-    });
+    };
+    if (firmId != null && String(firmId).trim() !== "") {
+      options.where = { FirmId: String(firmId).trim() };
+    }
+    const moneyLimits = await MoneyLimit.findAll(options);
     res.json(moneyLimits);
   } catch (err) {
     next(err);

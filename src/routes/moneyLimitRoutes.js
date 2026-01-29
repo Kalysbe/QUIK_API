@@ -13,6 +13,14 @@ const router = express.Router();
  *     summary: Получить список денежных лимитов
  *     tags: [MoneyLimits]
  *     description: Возвращает список всех денежных лимитов из базы данных
+ *     parameters:
+ *       - in: query
+ *         name: firmId
+ *         required: false
+ *         schema:
+ *           type: string
+ *           maxLength: 12
+ *         description: Фильтр по идентификатору фирмы
  *     responses:
  *       200:
  *         description: Успешный ответ

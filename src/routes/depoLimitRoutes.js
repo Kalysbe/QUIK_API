@@ -13,6 +13,14 @@ const router = express.Router();
  *     summary: Получить список позиций по инструментам
  *     tags: [DepoLimits]
  *     description: Возвращает список всех позиций по инструментам
+ *     parameters:
+ *       - in: query
+ *         name: firmId
+ *         required: false
+ *         schema:
+ *           type: string
+ *           maxLength: 12
+ *         description: Фильтр по идентификатору фирмы
  *     responses:
  *       200:
  *         description: Успешный ответ

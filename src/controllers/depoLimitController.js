@@ -33,10 +33,15 @@ function formatDepoLimitLine(item) {
    ========================= */
 export async function getDepoLimits(req, res, next) {
   try {
-    const depoLimits = await DepoLimit.findAll({
-      raw: true, // Возвращает все столбцы как сырые данные
+    const { firmId } = req.query;
+    const options = {
+      raw: true,
       order: [["FirmId", "ASC"]],
-    });
+    };
+    if (firmId != null && String(firmId).trim() !== "") {
+      options.where = { FirmId: String(firmId).trim() };
+    }
+    const depoLimits = await DepoLimit.findAll(options);
     res.json(depoLimits);
   } catch (err) {
     next(err);

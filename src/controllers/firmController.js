@@ -9,10 +9,15 @@ import { getMssqlPool, sql } from "../config/dbMssql.js";
    ========================= */
 export async function getFirms(req, res, next) {
   try {
-    const firms = await Firm.findAll({
-      raw: true, // Возвращает все столбцы как сырые данные
+    const { firmId } = req.query;
+    const options = {
+      raw: true,
       order: [["FirmId", "ASC"]],
-    });
+    };
+    if (firmId != null && String(firmId).trim() !== "") {
+      options.where = { FirmId: String(firmId).trim() };
+    }
+    const firms = await Firm.findAll(options);
     res.json(firms);
   } catch (err) {
     next(err);
