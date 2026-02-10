@@ -30,6 +30,8 @@ import accruedIntRoutes from "./routes/accruedIntRoutes.js";
 import faceValuesRoutes from "./routes/faceValuesRoutes.js";
 import crossratesRoutes from "./routes/crossratesRoutes.js";
 import tradesRoutes from "./routes/tradesRoutes.js";
+import ordersRoutes from "./routes/ordersRoutes.js";
+import paramsRoutes from "./routes/paramsRoutes.js";
 import { requestLogger } from "./utils/logger.js";
 import { ipWhitelistMiddleware } from "./middleware/ipWhitelist.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
@@ -154,6 +156,8 @@ app.use("/api/accrued-int", accruedIntRoutes);
 app.use("/api/face-values", faceValuesRoutes);
 app.use("/api/crossrates", crossratesRoutes);
 app.use("/api/trades", tradesRoutes);
+app.use("/api/orders", ordersRoutes);
+app.use("/api/params", paramsRoutes);
 
 // Обработка 404
 app.use(notFoundHandler);
