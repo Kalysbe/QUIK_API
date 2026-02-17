@@ -9,21 +9,14 @@ const router = express.Router();
  *   get:
  *     summary: Получить список сделок
  *     tags: [Trades]
- *     description: Возвращает все сделки из таблицы Trades. Любой query параметр, совпадающий с именем столбца, используется для фильтрации. Можно также передать объект filters.
+ *     description: Возвращает все сделки из таблицы Trades. Фильтрация через query-параметры. Пример GET /api/trades?FirmId=ABC&SecCode=GAZP
  *     parameters:
  *       - in: query
- *         name: filters
+ *         name: FirmId
  *         required: false
- *         description: >-
- *           Фильтры по столбцам. Можно передать объект через filters[Column]=value
- *           или JSON-строкой объекта. Пример: {"FirmId":"ABC","SecCode":"GAZP"}.
- *         style: deepObject
- *         explode: true
+ *         description: Пример фильтра. Любой столбец таблицы Trades можно передать как query-параметр
  *         schema:
- *           oneOf:
- *             - type: string
- *             - type: object
- *               additionalProperties: true
+ *           type: string
  *     responses:
  *       200:
  *         description: Успешный ответ

@@ -16,17 +16,11 @@ const router = express.Router();
  *   get:
  *     summary: Получить параметры (Params)
  *     tags: [Params]
- *     description: Возвращает данные из таблицы Params (PostgreSQL) с фильтрацией по любому столбцу.
- *       Фильтры можно передать как query-параметры (имя столбца = значение) или в параметре filters (JSON).
+ *     description: Возвращает данные из таблицы Params (PostgreSQL) с фильтрацией по любому столбцу через query-параметры. Пример GET /api/params?paramName=value
  *     parameters:
  *       - in: query
- *         name: filters
- *         schema:
- *           type: string
- *         description: JSON-строка объекта фильтров по столбцам таблицы Params
- *       - in: query
- *         name: {column_name}
- *         description: Любой столбец таблицы Params — фильтр по равенству
+ *         name: paramName
+ *         description: Пример фильтра. Любой столбец таблицы Params можно передать как query-параметр
  *         schema:
  *           type: string
  *     responses:

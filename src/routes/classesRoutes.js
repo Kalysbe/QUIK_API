@@ -25,13 +25,13 @@ const router = express.Router();
  *   get:
  *     summary: Получить классы инструментов
  *     tags: [Classes]
- *     description: Возвращает данные из таблицы Classes (PostgreSQL) с фильтрацией по query параметрам.
+ *     description: Возвращает данные из таблицы Classes (PostgreSQL) с фильтрацией по query параметрам. Пример GET /api/classes?ClassCode=TQBR
  *     parameters:
  *       - in: query
- *         name: filters
+ *         name: ClassCode
+ *         description: Пример фильтра — код класса (любой столбец таблицы можно использовать как query-параметр)
  *         schema:
  *           type: string
- *         description: JSON-строка объекта фильтров
  *     responses:
  *       200:
  *         description: Список классов

@@ -16,17 +16,11 @@ const router = express.Router();
  *   get:
  *     summary: Получить заявки (Orders)
  *     tags: [Orders]
- *     description: Возвращает данные из таблицы Orders (PostgreSQL) с фильтрацией по любому столбцу.
- *       Фильтры можно передать как query-параметры (имя столбца = значение) или в параметре filters (JSON).
+ *     description: Возвращает данные из таблицы Orders (PostgreSQL) с фильтрацией по любому столбцу через query-параметры. Пример GET /api/orders?status=paid&userId=123&sortBy=createdAt&order=desc&page=2&limit=50
  *     parameters:
  *       - in: query
- *         name: filters
- *         schema:
- *           type: string
- *         description: JSON-строка объекта фильтров по столбцам таблицы Orders
- *       - in: query
- *         name: {column_name}
- *         description: Любой столбец таблицы Orders — фильтр по равенству (например order_num=123)
+ *         name: status
+ *         description: Пример фильтра — статус заявки. Любой столбец таблицы Orders можно передать как query-параметр
  *         schema:
  *           type: string
  *     responses:

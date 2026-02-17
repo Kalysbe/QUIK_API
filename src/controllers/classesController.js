@@ -35,7 +35,7 @@ function detectSpFailure(result, infoObjects) {
 
 /* =========================
    GET /api/classes
-   Фильтрация по любому столбцу через query параметры
+   Фильтрация по любому столбцу через query параметры. Пример: GET /api/classes?ClassCode=TQBR
    ========================= */
 export async function getClasses(req, res, next) {
     try {
@@ -53,45 +53,12 @@ export async function getClasses(req, res, next) {
         );
 
         const columnNames = new Set(columnsResult.rows.map((row) => row.column_name));
-
-        let filtersFromParam = {};
-        if (req.query.filters !== undefined) {
-            if (typeof req.query.filters === "string") {
-                try {
-                    const parsed = JSON.parse(req.query.filters);
-                    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-                        filtersFromParam = parsed;
-                    } else {
-                        return res.status(400).json({
-                            success: false,
-                            message: "Параметр filters должен быть объектом или JSON-строкой объекта",
-                        });
-                    }
-                } catch (error) {
-                    return res.status(400).json({
-                        success: false,
-                        message: "Не удалось распарсить JSON в параметре filters",
-                    });
-                }
-            } else if (typeof req.query.filters === "object") {
-                filtersFromParam = req.query.filters;
-            } else {
-                return res.status(400).json({
-                    success: false,
-                    message: "Параметр filters должен быть объектом или JSON-строкой объекта",
-                });
-            }
-        }
-
-        const directFilters = { ...req.query };
-        delete directFilters.filters;
-
-        const combinedFilters = { ...directFilters, ...filtersFromParam };
+        const filters = { ...req.query };
 
         const conditions = [];
         const params = [];
 
-        for (const [key, value] of Object.entries(combinedFilters)) {
+        for (const [key, value] of Object.entries(filters)) {
             if (!columnNames.has(key)) continue;
             params.push(value);
             conditions.push(`"${key}" = $${params.length}`);
