@@ -120,6 +120,49 @@ export async function getAggregatedTrades(req, res, next) {
 }
 
 /* =========================
+   GET /api/trades/sec-codes
+   Список уникальных SecCode в таблице Trades
+   ========================= */
+export async function getTradesSecCodes(req, res, next) {
+  try {
+    const tableName = "Trades";
+    const columnsResult = await pgPool.query(
+      `
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = $1
+      ORDER BY ordinal_position;
+      `,
+      [tableName]
+    );
+
+    const columnNames = new Set(columnsResult.rows.map((row) => row.column_name));
+    const classCode = resolveColumn(columnNames, COLUMN_CANDIDATES.ClassCode);
+    const secCodeCol = resolveColumn(columnNames, ["SecCode", "seccode", "sec_code"]);
+
+    const sourceCol = secCodeCol ?? classCode;
+    if (!sourceCol) {
+      return res.status(400).json({
+        error: "Не найдены колонки ClassCode или SecCode в таблице Trades",
+      });
+    }
+
+    const query = `
+      SELECT DISTINCT "${sourceCol}" AS "SecCode"
+      FROM public."${tableName}"
+      WHERE "${sourceCol}" IS NOT NULL
+      ORDER BY "SecCode" ASC
+    `;
+
+    const result = await pgPool.query(query);
+    res.json(result.rows.map((row) => row.SecCode));
+  } catch (err) {
+    next(err);
+  }
+}
+
+/* =========================
    GET /api/trades
    Фильтрация по любому столбцу через query параметры. Пример: GET /api/trades?FirmId=ABC&SecCode=GAZP
    ========================= */

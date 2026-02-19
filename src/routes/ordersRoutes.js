@@ -14,26 +14,94 @@ const router = express.Router();
  * @swagger
  * /api/orders:
  *   get:
- *     summary: Получить заявки (Orders)
+ *     summary: Получить активные заявки (State = "Активна")
  *     tags: [Orders]
- *     description: Возвращает данные из таблицы Orders (PostgreSQL) с фильтрацией по любому столбцу через query-параметры. Пример GET /api/orders?status=paid&userId=123&sortBy=createdAt&order=desc&page=2&limit=50
+ *     description: |
+ *       Возвращает только заявки со статусом "Активна".
+ *       Поля: OrderNum, ClassCode, SecCode, Price, Qty, Value, OrderDateTime, Operation, State.
+ *       Фильтрация по всем указанным столбцам через query-параметры.
  *     parameters:
  *       - in: query
- *         name: status
- *         description: Пример фильтра — статус заявки. Любой столбец таблицы Orders можно передать как query-параметр
+ *         name: OrderNum
+ *         required: false
+ *         description: Фильтр по номеру заявки
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: ClassCode
+ *         required: false
+ *         description: Фильтр по коду класса (например, TQBR)
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: SecCode
+ *         required: false
+ *         description: Фильтр по коду бумаги
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: Price
+ *         required: false
+ *         description: Фильтр по цене
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: Qty
+ *         required: false
+ *         description: Фильтр по количеству
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: Value
+ *         required: false
+ *         description: Фильтр по сумме
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: OrderDateTime
+ *         required: false
+ *         description: Фильтр по дате/времени заявки
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - in: query
+ *         name: Operation
+ *         required: false
+ *         description: Фильтр по операции (Купля/Продажа)
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: Список заявок
+ *         description: Список активных заявок
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
  *                 type: object
+ *                 properties:
+ *                   OrderNum:
+ *                     type: string
+ *                   ClassCode:
+ *                     type: string
+ *                   SecCode:
+ *                     type: string
+ *                   Price:
+ *                     type: number
+ *                   Qty:
+ *                     type: number
+ *                   Value:
+ *                     type: number
+ *                   OrderDateTime:
+ *                     type: string
+ *                     format: date-time
+ *                   Operation:
+ *                     type: string
+ *                   State:
+ *                     type: string
+ *                     example: "Активна"
  *       400:
- *         description: Некорректные параметры фильтрации
+ *         description: Не найдена колонка State в таблице Orders
  *       404:
  *         description: Таблица Orders не найдена
  *       500:

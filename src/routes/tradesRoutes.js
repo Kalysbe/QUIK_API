@@ -1,5 +1,5 @@
 import express from "express";
-import { getTrades, getAggregatedTrades } from "../controllers/tradesController.js";
+import { getTrades, getAggregatedTrades, getTradesSecCodes } from "../controllers/tradesController.js";
 
 const router = express.Router();
 
@@ -82,6 +82,32 @@ const router = express.Router();
  *         description: Ошибка сервера
  */
 router.get("/aggregated", getAggregatedTrades);
+
+/**
+ * @swagger
+ * /api/trades/sec-codes:
+ *   get:
+ *     summary: Получить список SecCode в таблице Trades
+ *     tags: [Trades]
+ *     description: |
+ *       Возвращает массив уникальных значений SecCode из таблицы Trades.
+ *       Если колонка SecCode отсутствует, используется ClassCode.
+ *     responses:
+ *       200:
+ *         description: Успешный ответ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: string
+ *               example: ["GAZP", "SBER", "LKOH"]
+ *       400:
+ *         description: Не найдены колонки ClassCode или SecCode
+ *       500:
+ *         description: Ошибка сервера
+ */
+router.get("/sec-codes", getTradesSecCodes);
 
 /**
  * @swagger
