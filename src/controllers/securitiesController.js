@@ -1,6 +1,7 @@
 // controllers/securitiesController.js
 import { z } from "zod";
 import { getMssqlPool, sql } from "../config/dbMssql.js";
+import pgPool from "../config/dbPostgres.js";
 
 // Хелперы
 function detectSpFailure(result, infoObjects) {
@@ -38,6 +39,79 @@ function normalizeNullables(data, nullableKeys) {
         if (out[k] === "" || out[k] === undefined) out[k] = null;
     }
     return out;
+}
+
+/**
+ * Resolve output column: prefer primary name, fallback to alternate if primary doesn't exist.
+ */
+function resolveOutputColumn(columnNames, primary, alternates = []) {
+    if (columnNames.has(primary)) return primary;
+    for (const alt of alternates) {
+        if (columnNames.has(alt)) return alt;
+    }
+    return null;
+}
+
+/* =========================
+   GET /api/securities
+   Возвращает TradeDate, ClassCode, SecCode, FaceUnit, SecShortName, SecFullName.
+   Фильтрация по любому столбцу через query-параметры.
+   ========================= */
+export async function getSecurities(req, res, next) {
+    try {
+        const tableName = "Securities";
+
+        const columnsResult = await pgPool.query(
+            `
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = $1
+            ORDER BY ordinal_position;
+            `,
+            [tableName]
+        );
+
+        if (columnsResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: `Таблица "${tableName}" не найдена в схеме public`,
+            });
+        }
+
+        const columnNames = new Set(columnsResult.rows.map((row) => row.column_name));
+
+        const selectParts = [];
+        const baseCols = ["TradeDate", "ClassCode", "SecCode", "FaceUnit"];
+        for (const c of baseCols) {
+            if (columnNames.has(c)) selectParts.push(`"${c}"`);
+        }
+        const shortCol = resolveOutputColumn(columnNames, "SecShortName", ["ShortName"]);
+        if (shortCol) selectParts.push(`"${shortCol}" AS "SecShortName"`);
+        const fullCol = resolveOutputColumn(columnNames, "SecFullName", ["FullName"]);
+        if (fullCol) selectParts.push(`"${fullCol}" AS "SecFullName"`);
+
+        const selectCols = selectParts.join(", ");
+        const filters = { ...req.query };
+
+        const conditions = [];
+        const params = [];
+
+        for (const [key, value] of Object.entries(filters)) {
+            if (!columnNames.has(key)) continue;
+            params.push(value);
+            conditions.push(`"${key}" = $${params.length}`);
+        }
+
+        const whereClause = conditions.length ? ` WHERE ${conditions.join(" AND ")}` : "";
+        const orderCol = columnNames.has("TradeDate") ? '"TradeDate"' : '"ClassCode"';
+        const query = `SELECT ${selectCols} FROM public."${tableName}"${whereClause} ORDER BY ${orderCol} DESC`;
+
+        const result = await pgPool.query(query, params);
+        res.json(result.rows);
+    } catch (err) {
+        next(err);
+    }
 }
 
 /* =========================

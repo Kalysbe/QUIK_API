@@ -1,5 +1,5 @@
 import express from "express";
-import { createSecurity } from "../controllers/securitiesController.js";
+import { getSecurities, createSecurity } from "../controllers/securitiesController.js";
 
 const router = express.Router();
 
@@ -10,6 +10,74 @@ const router = express.Router();
  *   x-hidden: true
  *   description: API для управления инструментами (акции, фьючерсы, валюта, опционы, спреды, цифровые свидетельства)
  */
+
+/**
+ * @swagger
+ * tags:
+ *   name: Securities List
+ *   description: API для получения списка инструментов (Securities)
+ */
+
+/**
+ * @swagger
+ * /api/securities:
+ *   get:
+ *     summary: Получить список инструментов (Securities)
+ *     tags: [Securities List]
+ *     description: |
+ *       Возвращает данные из таблицы Securities (PostgreSQL).
+ *       Поля: TradeDate, ClassCode, SecCode, FaceUnit, SecShortName, SecFullName.
+ *       Фильтрация по любому столбцу через query-параметры.
+ *       Примеры: GET /api/securities?ClassCode=TQBR&SecCode=GAZP
+ *     parameters:
+ *       - in: query
+ *         name: ClassCode
+ *         schema:
+ *           type: string
+ *         description: Фильтр по коду класса
+ *       - in: query
+ *         name: SecCode
+ *         schema:
+ *           type: string
+ *         description: Фильтр по коду бумаги
+ *       - in: query
+ *         name: TradeDate
+ *         schema:
+ *           type: string
+ *         description: Фильтр по дате торгов
+ *       - in: query
+ *         name: FaceUnit
+ *         schema:
+ *           type: string
+ *         description: Фильтр по валюте номинала
+ *     responses:
+ *       200:
+ *         description: Список инструментов
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   TradeDate:
+ *                     type: string
+ *                   ClassCode:
+ *                     type: string
+ *                   SecCode:
+ *                     type: string
+ *                   FaceUnit:
+ *                     type: string
+ *                   SecShortName:
+ *                     type: string
+ *                   SecFullName:
+ *                     type: string
+ *       404:
+ *         description: Таблица Securities не найдена
+ *       500:
+ *         description: Ошибка сервера
+ */
+router.get("/", getSecurities);
 
 /**
  * @swagger
