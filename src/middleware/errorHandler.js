@@ -45,9 +45,18 @@ function serializeError(err) {
  * Централизованный обработчик ошибок Express
  */
 export function errorHandler(err, req, res, next) {
+  const serializedError = serializeError(err);
+
+  // Сохраняем информацию об ошибке для последующего логирования в api_logs
+  req._errorForLogging = {
+    errorMessage: err.message,
+    errorStack: process.env.NODE_ENV === 'production' ? undefined : err.stack,
+    errorType: err.name
+  };
+
   // Логируем ошибку
   logger.error('Unhandled error', {
-    error: serializeError(err),
+    error: serializedError,
     request: {
       method: req.method,
       url: req.url,

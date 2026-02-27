@@ -1,18 +1,13 @@
 import { CronJob } from "cron";
 import { getInstruments } from "../services/instrumentsService.js";
+import { cleanupOldLogs } from "../repositories/apiLogsRepository.js";
 
 const job = new CronJob(
   "*/500 * * * * *", // ← 6 звёздочек! теперь первая — это секунды
   async () => {
-    console.log("🔍 Проверка новых инструментов...", new Date().toLocaleTimeString());
-    const instruments = await getInstruments();
-     for (const instrument of instruments) {
-        // console.log(instrument);
-    //   if (instrument.needs_coupon) {
-    //     await addCoupon(instrument);
-    //     console.log(`✅ Купон добавлен для инструмента ${instrument.name}`);
-    //   }
-     }
+    // Зарезервировано для логики работы с инструментами (ранее закомментировано)
+    // Также выполняем регулярную очистку старых логов API (старше 12 месяцев)
+    await cleanupOldLogs(12);
   },
   null,
   true,

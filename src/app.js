@@ -33,8 +33,10 @@ import currencyInfoRoutes from "./routes/currencyInfoRoutes.js";
 import tradesRoutes from "./routes/tradesRoutes.js";
 import ordersRoutes from "./routes/ordersRoutes.js";
 import paramsRoutes from "./routes/paramsRoutes.js";
+import logsRoutes from "./routes/logsRoutes.js";
 import { requestLogger } from "./utils/logger.js";
 import { ipWhitelistMiddleware } from "./middleware/ipWhitelist.js";
+import { apiLoggerMiddleware } from "./middleware/apiLogger.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
 const app = express();
@@ -84,7 +86,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Логирование запросов
+// Логирование запросов в файловый лог
 app.use(requestLogger);
 
 /**
@@ -126,6 +128,9 @@ app.get("/health", (req, res) => {
 // Проверка IP адреса (только локальная сеть) - применяется ко всем остальным маршрутам
 app.use(ipWhitelistMiddleware);
 
+// Централизованное логирование всех API-вызовов в PostgreSQL
+app.use(apiLoggerMiddleware);
+
 // Маршруты
 app.use("/api/instruments", instrumentsRoutes);
 app.use("/api/instruments", instrumentsRoutes); // Alias for convenience
@@ -160,6 +165,7 @@ app.use("/api/currency-info", currencyInfoRoutes);
 app.use("/api/trades", tradesRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/params", paramsRoutes);
+app.use("/api/logs", logsRoutes);
 
 // Обработка 404
 app.use(notFoundHandler);
