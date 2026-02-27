@@ -2,8 +2,9 @@ import { CronJob } from "cron";
 import { getInstruments } from "../services/instrumentsService.js";
 import { cleanupOldLogs } from "../repositories/apiLogsRepository.js";
 
+// Запуск задачи раз в сутки в 03:00 по Asia/Bishkek
 const job = new CronJob(
-  "*/500 * * * * *", // ← 6 звёздочек! теперь первая — это секунды
+  "0 0 3 * * *",
   async () => {
     // Зарезервировано для логики работы с инструментами (ранее закомментировано)
     // Также выполняем регулярную очистку старых логов API (старше 12 месяцев)
@@ -11,7 +12,7 @@ const job = new CronJob(
   },
   null,
   true,
-  "Asia/Bishkek" // часовой пояс (по желанию)
+  "Asia/Bishkek"
 );
 
 
