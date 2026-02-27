@@ -41,8 +41,12 @@ import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 
-// Парсинг JSON
-app.use(express.json());
+// Лимит размера тела запросов (по умолчанию 5mb, можно переопределить через переменную окружения JSON_BODY_LIMIT)
+const JSON_BODY_LIMIT = "50mb";
+
+// Парсинг JSON и urlencoded с увеличенным лимитом
+app.use(express.json({ limit: JSON_BODY_LIMIT }));
+app.use(express.urlencoded({ limit: JSON_BODY_LIMIT, extended: true }));
 
 // Swagger JSON endpoint (должен быть самым первым, до любых middleware)
 app.get("/api-docs.json", (req, res) => {
