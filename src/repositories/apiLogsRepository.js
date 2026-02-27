@@ -34,12 +34,22 @@ export async function insertApiLog(log) {
     )
     VALUES (
       $1, $2, $3, $4, $5,
-      $6, $7, $8, $9, $10,
-      $11, $12, $13, $14, $15,
+      $6::jsonb, $7::jsonb, $8::jsonb, $9, $10,
+      $11, $12, $13, $14::jsonb, $15,
       $16, $17, $18, $19, $20,
       $21
     )
   `;
+
+  // Для jsonb-полей всегда передаём валидные JSON-строки или null
+  const queryParamsJson =
+    log.queryParams != null ? JSON.stringify(log.queryParams) : null;
+  const requestBodyJson =
+    log.requestBody != null ? JSON.stringify(log.requestBody) : null;
+  const headersJson =
+    log.headers != null ? JSON.stringify(log.headers) : null;
+  const responseBodyJson =
+    log.responseBody != null ? JSON.stringify(log.responseBody) : null;
 
   const values = [
     log.requestId,
@@ -47,9 +57,9 @@ export async function insertApiLog(log) {
     log.method,
     log.url,
     log.route,
-    log.queryParams ?? null,
-    log.requestBody ?? null,
-    log.headers ?? null,
+    queryParamsJson,
+    requestBodyJson,
+    headersJson,
     log.ipAddress ?? null,
     log.userAgent ?? null,
     log.userId ?? null,

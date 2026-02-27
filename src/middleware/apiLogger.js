@@ -77,6 +77,7 @@ function truncateString(str, maxBytes) {
 
 /**
  * Маскирование и обрезка тела запроса/ответа.
+ * Возвращаемое значение всегда должно быть корректным JSON для jsonb-колонок.
  */
 function sanitizeAndTruncateBody(body) {
   if (body === undefined) {
@@ -91,24 +92,41 @@ function sanitizeAndTruncateBody(body) {
     wasString = true;
   }
 
-  let masked = raw;
-
   if (isObject(raw)) {
     const jsonStr = JSON.stringify(raw);
     if (Buffer.byteLength(jsonStr, "utf8") > MAX_BODY_BYTES) {
       const { data, truncated } = truncateString(jsonStr, MAX_SAVED_BYTES);
-      return { data, truncated: truncated || true };
+      // Заворачиваем превью в объект, чтобы сохранить валидный JSON
+      return {
+        data: {
+          truncated: true,
+          preview: data
+        },
+        truncated: true
+      };
     }
-    masked = maskSensitiveData(raw);
+    const masked = maskSensitiveData(raw);
     return { data: masked, truncated: false };
   }
 
   if (wasString) {
     if (Buffer.byteLength(raw, "utf8") > MAX_BODY_BYTES) {
       const { data, truncated } = truncateString(raw, MAX_SAVED_BYTES);
-      return { data, truncated };
+      return {
+        data: {
+          truncated: true,
+          preview: data
+        },
+        truncated: true
+      };
     }
-    return { data: raw, truncated: false };
+    // Оборачиваем строку в объект, чтобы она была валидным JSON
+    return {
+      data: {
+        value: raw
+      },
+      truncated: false
+    };
   }
 
   return { data: null, truncated: false };
