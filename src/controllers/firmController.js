@@ -30,14 +30,14 @@ export async function getFirms(req, res, next) {
    ========================= */
 const newFirmSchema = z.object({
     FirmCode: z.string().max(12),
-    FirmName: z.string().max(30),
+    FirmName: z.string().max(128),
     Permissions: z.number().int(),
     Exchange: z.string().max(12),
 });
 
 const newFirmTypeMap = {
     FirmCode: sql.VarChar(12),
-    FirmName: sql.VarChar(30),
+    FirmName: sql.VarChar(128),
     Permissions: sql.SmallInt,
     Exchange: sql.VarChar(12),
 };

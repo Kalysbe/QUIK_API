@@ -67,7 +67,7 @@ router.get("/", getFirms);
  *                 maxLength: 12
  *               FirmName:
  *                 type: string
- *                 maxLength: 30
+ *                 maxLength: 128
  *               Permissions:
  *                 type: integer
  *               Exchange:
