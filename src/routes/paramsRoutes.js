@@ -1,5 +1,5 @@
 import express from "express";
-import { getParams } from "../controllers/paramsController.js";
+import { getParams, getParamsDetails } from "../controllers/paramsController.js";
 
 const router = express.Router();
 
@@ -40,5 +40,38 @@ const router = express.Router();
  *         description: Ошибка сервера
  */
 router.get("/", getParams);
+
+/**
+ * @swagger
+ * /api/params/details/{ClassCode}/{SecCode}:
+ *   get:
+ *     summary: Получить полные детали инструмента по ClassCode и SecCode
+ *     tags: [Params]
+ *     parameters:
+ *       - in: path
+ *         name: ClassCode
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Код класса инструмента
+ *       - in: path
+ *         name: SecCode
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Код инструмента
+ *     responses:
+ *       200:
+ *         description: Объект с полными данными из Params
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       404:
+ *         description: Объект не найден
+ *       500:
+ *         description: Ошибка сервера
+ */
+router.get("/details/:ClassCode/:SecCode", getParamsDetails);
 
 export default router;
