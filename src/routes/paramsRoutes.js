@@ -1,5 +1,10 @@
 import express from "express";
-import { getParams, getParamsDetails } from "../controllers/paramsController.js";
+import {
+    getParams,
+    getParamsDetails,
+    getParamsActual,
+    getParamsActualExists,
+} from "../controllers/paramsController.js";
 
 const router = express.Router();
 
@@ -40,6 +45,54 @@ const router = express.Router();
  *         description: Ошибка сервера
  */
 router.get("/", getParams);
+
+/**
+ * @swagger
+ * /api/params/actual/exists:
+ *   get:
+ *     summary: Есть ли актуальные Params (открытая сессия на последнем TradeDate)
+ *     tags: [Params]
+ *     description: Возвращает true/false — есть ли строки за MAX(TradeDate) с status «торгуется» и tradingstatus «открыта»
+ *     responses:
+ *       200:
+ *         description: Логическое значение JSON (true или false)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: boolean
+ *       400:
+ *         description: Нет нужных столбцов в таблице
+ *       404:
+ *         description: Таблица Params не найдена
+ *       500:
+ *         description: Ошибка сервера
+ */
+router.get("/actual/exists", getParamsActualExists);
+
+/**
+ * @swagger
+ * /api/params/actual:
+ *   get:
+ *     summary: Актуальные Params (открытая сессия на последнем TradeDate)
+ *     tags: [Params]
+ *     description: ClassCode, SecCode, TradeDate (DD-MM-YYYY), status, tradingstatus. TradeDate = MAX в таблице, фильтры status «торгуется», tradingstatus «открыта»
+ *     responses:
+ *       200:
+ *         description: Массив записей из Params
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *       400:
+ *         description: Нет нужных столбцов в таблице
+ *       404:
+ *         description: Таблица Params не найдена
+ *       500:
+ *         description: Ошибка сервера
+ */
+router.get("/actual", getParamsActual);
 
 /**
  * @swagger
