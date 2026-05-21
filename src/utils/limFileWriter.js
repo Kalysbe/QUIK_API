@@ -1,7 +1,9 @@
 import fs from "fs/promises";
 import path from "path";
+import iconv from "iconv-lite";
 
 const LIM_DIR_NAME = "lims";
+const LIM_FILE_ENCODING = "win1251";
 
 function pad2(value) {
   return String(value).padStart(2, "0");
@@ -42,7 +44,8 @@ export async function writeLimFile(lines, prefix) {
   }
 
   const payload = `${lines.join("\n")}\n`;
-  await fs.writeFile(limPath, payload, "utf8");
+  const buffer = iconv.encode(payload, LIM_FILE_ENCODING);
+  await fs.writeFile(limPath, buffer);
 
   return { filePath: limPath, fileName };
 }
