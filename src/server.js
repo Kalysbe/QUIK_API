@@ -9,7 +9,7 @@ import {
   setupUncaughtExceptionHandler 
 } from "./middleware/errorHandler.js";
 
-dotenv.config();
+dotenv.config({ override: true });
 
 // Настройка обработчиков необработанных исключений
 setupUnhandledRejectionHandler();

@@ -24,12 +24,9 @@ module.exports = {
     log_file: './logs/pm2-combined.log',
     time: true,
     
-    // Переменные окружения
+    // SERVER_HOST и ALLOWED_NETWORKS — только из .env
     env: {
       NODE_ENV: 'production',
-      PORT: 5000,
-      SERVER_HOST: '0.0.0.0',
-      ALLOWED_NETWORKS: '*',
       LOG_LEVEL: 'info'
     },
     

@@ -21,8 +21,8 @@ const options = {
     },
     servers: [
       {
-        url: `http://${process.env.SERVER_HOST || "127.0.0.1"}:${process.env.PORT || 5000}`,
-        description: "Server",
+        url: "/",
+        description: "Текущий сервер (тот же хост, с которого открыт Swagger)",
       },
     ],
   },

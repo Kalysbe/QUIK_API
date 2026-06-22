@@ -42,6 +42,17 @@ import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 
+// CORS — разрешаем запросы с любых origin (Swagger, фронтенд, другие ПК)
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, X-Requested-With");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+  next();
+});
+
 // Лимит размера тела запросов (по умолчанию 5mb, можно переопределить через переменную окружения JSON_BODY_LIMIT)
 const JSON_BODY_LIMIT = "50mb";
 
