@@ -17,15 +17,7 @@ setupUncaughtExceptionHandler();
 
 const PORT = process.env.PORT || 5000;
 
-// КРИТИЧЕСКИ ВАЖНО: Сервер НЕ должен слушать 0.0.0.0
-// Используем конкретный IP из переменных окружения или localhost
-const HOST = process.env.SERVER_HOST || '127.0.0.1';
-
-// Проверяем, что не используется 0.0.0.0
-if (HOST === '0.0.0.0') {
-  logger.error('SECURITY ERROR: Server cannot listen on 0.0.0.0. Use specific IP or 127.0.0.1');
-  process.exit(1);
-}
+const HOST = process.env.SERVER_HOST || '0.0.0.0';
 
 let server;
 
@@ -59,7 +51,7 @@ async function startServer() {
         host: HOST,
         port: PORT,
         environment: process.env.NODE_ENV || 'production',
-        allowedNetworks: process.env.ALLOWED_NETWORKS || 'default (192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12)'
+        allowedNetworks: process.env.ALLOWED_NETWORKS || 'all (*)'
       });
     });
 

@@ -28,7 +28,8 @@ module.exports = {
     env: {
       NODE_ENV: 'production',
       PORT: 5000,
-      SERVER_HOST: '127.0.0.1', // КРИТИЧЕСКИ ВАЖНО: не использовать 0.0.0.0
+      SERVER_HOST: '0.0.0.0',
+      ALLOWED_NETWORKS: '*',
       LOG_LEVEL: 'info'
     },
     

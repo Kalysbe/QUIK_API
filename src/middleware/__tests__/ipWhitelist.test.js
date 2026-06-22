@@ -67,6 +67,16 @@ describe('IP Whitelist Middleware', () => {
   });
 
   describe('External IPs', () => {
+    const originalEnv = process.env.ALLOWED_NETWORKS;
+
+    beforeEach(() => {
+      process.env.ALLOWED_NETWORKS = '192.168.0.0/16,10.0.0.0/8,172.16.0.0/12';
+    });
+
+    afterEach(() => {
+      process.env.ALLOWED_NETWORKS = originalEnv;
+    });
+
     test('should reject 8.8.8.8', () => {
       req.ip = '8.8.8.8';
       ipWhitelistMiddleware(req, res, next);
@@ -94,6 +104,20 @@ describe('IP Whitelist Middleware', () => {
       ipWhitelistMiddleware(req, res, next);
       expect(next).toHaveBeenCalled();
       expect(req.clientIP).toBe('192.168.1.100');
+    });
+  });
+
+  describe('Allow all networks', () => {
+    test('should allow any IP when ALLOWED_NETWORKS is *', () => {
+      const originalEnv = process.env.ALLOWED_NETWORKS;
+      process.env.ALLOWED_NETWORKS = '*';
+
+      req.ip = '8.8.8.8';
+      ipWhitelistMiddleware(req, res, next);
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+
+      process.env.ALLOWED_NETWORKS = originalEnv;
     });
   });
 

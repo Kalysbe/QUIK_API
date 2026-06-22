@@ -89,6 +89,11 @@ function ipToNumber(ip) {
  * @param {Object} res - Express response
  * @param {Function} next - Express next
  */
+function isWhitelistDisabled() {
+  const value = process.env.ALLOWED_NETWORKS?.trim();
+  return !value || value === '*' || value === '0.0.0.0/0';
+}
+
 export function ipWhitelistMiddleware(req, res, next) {
   // Получаем реальный IP клиента
   const clientIP = 
@@ -99,10 +104,16 @@ export function ipWhitelistMiddleware(req, res, next) {
     req.ip ||
     'unknown';
 
+  if (isWhitelistDisabled()) {
+    req.clientIP = clientIP;
+    return next();
+  }
+
   // Получаем разрешенные сети из переменных окружения
   const allowedNetworks = process.env.ALLOWED_NETWORKS
-    ? process.env.ALLOWED_NETWORKS.split(',').map(n => n.trim())
-    : [];
+    .split(',')
+    .map(n => n.trim())
+    .filter(Boolean);
 
   // Проверяем IP
   if (!isLocalNetworkIP(clientIP, allowedNetworks)) {
