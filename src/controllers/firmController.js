@@ -1,7 +1,7 @@
 // src/controllers/firmController.js
 import Firm from "../models/Firm.js";
 import { z } from "zod";
-import { createStoredProcedureHandler } from "../utils/storedProcedureHelper.js";
+import { createStoredProcedureHandler, executeStoredProcedure } from "../utils/storedProcedureHelper.js";
 import { getMssqlPool, sql } from "../config/dbMssql.js";
 
 /* =========================
@@ -42,13 +42,55 @@ const newFirmTypeMap = {
     Exchange: sql.VarChar(12),
 };
 
-export const createFirm = createStoredProcedureHandler(
-    newFirmSchema,
-    "NewFirm",
-    newFirmTypeMap,
-    [],
-    "Фирма успешно добавлена"
-);
+/**
+ * Идемпотентное создание: если фирма уже есть в MSSQL (QME),
+ * возвращаем 200 вместо 409/500 — типичный кейс синхронизации,
+ * когда PostgreSQL-экспорт ещё не успел подтянуть FirmId.
+ */
+export async function createFirm(req, res, next) {
+  try {
+    const parsed = newFirmSchema.safeParse(req.body);
+    if (!parsed.success) {
+      const issues = parsed.error?.issues || [];
+      return res.status(400).json({
+        success: false,
+        message: "Ошибка валидации данных",
+        errors: issues.map((e) => ({
+          field: e.path?.join(".") || "",
+          message: e.message || "Ошибка валидации",
+        })),
+      });
+    }
+
+    const data = parsed.data;
+    const pool = await getMssqlPool();
+    const existing = await pool
+      .request()
+      .input("FirmCode", sql.VarChar(12), data.FirmCode)
+      .query("SELECT FirmCode, FirmName, Exchange FROM Firms WHERE FirmCode = @FirmCode");
+
+    if (existing.recordset?.length > 0) {
+      return res.status(200).json({
+        success: true,
+        message: "Фирма уже существует",
+        alreadyExists: true,
+        firm: existing.recordset[0],
+      });
+    }
+
+    return await executeStoredProcedure(
+      "NewFirm",
+      data,
+      newFirmTypeMap,
+      [],
+      res,
+      next,
+      "Фирма успешно добавлена"
+    );
+  } catch (error) {
+    return next(error);
+  }
+}
 
 /* =========================
    POST /api/firms/add-to-class
@@ -71,4 +113,3 @@ export const addFirmToClass = createStoredProcedureHandler(
     [],
     "Фирма успешно привязана к классу"
 );
-

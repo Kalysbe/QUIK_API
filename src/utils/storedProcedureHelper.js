@@ -1,11 +1,18 @@
 // utils/storedProcedureHelper.js
 // Универсальный хелпер для выполнения хранимых процедур
 import { getMssqlPool, sql } from "../config/dbMssql.js";
+import logger from "./logger.js";
+
+const BUSINESS_ERROR_RE =
+    /unable|error|ошибк|does not exist|not found|already exists|duplicate|invalid|constraint|violat|unique key|primary key/i;
+
+export function matchesBusinessErrorText(s) {
+    return BUSINESS_ERROR_RE.test(s || "");
+}
 
 export function detectSpFailure(result, infoObjects) {
     const infoMessages = (infoObjects || []).map(i => i.message ?? "");
-    const matchesErrText = (s) =>
-        /unable|error|ошибк|does not exist|not found|already exists|duplicate|invalid|constraint|violat/i.test(s || "");
+    const matchesErrText = matchesBusinessErrorText;
 
     const infoLooksLikeError = infoMessages.some(matchesErrText);
     const recordsetHasFailureFlag =
@@ -99,24 +106,44 @@ export async function executeStoredProcedure(
     } catch (error) {
         const isMssqlError =
             error?.name === "RequestError" ||
+            error?.name === "ConnectionError" ||
             error?.code === "EREQUEST" ||
+            error?.code === "ETIMEOUT" ||
+            error?.code === "ECONNRESET" ||
             error?.originalError;
 
         if (isMssqlError) {
+            const sqlMessage = error.originalError?.message || error.message || "";
             const sqlInfo = {
-                message: error.originalError?.message || error.message,
-                number: error.originalError?.number,
-                state: error.originalError?.state,
-                class: error.originalError?.class,
-                lineNumber: error.originalError?.lineNumber,
+                message: sqlMessage,
+                number: error.originalError?.number ?? error.number,
+                state: error.originalError?.state ?? error.state,
+                class: error.originalError?.class ?? error.class,
+                lineNumber: error.originalError?.lineNumber ?? error.lineNumber,
                 serverName: error.originalError?.serverName,
-                procName: error.originalError?.procName,
+                procName: error.originalError?.procName ?? error.procName ?? procedureName,
                 precedingErrors: error.precedingErrors?.map((e) => e.message),
             };
 
-            return res.status(500).json({
+            // NewFirm и др. делают RAISERROR при дубликатах/бизнес-ошибках —
+            // это конфликт данных (409), а не внутренняя ошибка сервера (500).
+            const isBusinessError = matchesBusinessErrorText(sqlMessage);
+            const statusCode = isBusinessError ? 409 : 500;
+
+            logger.error(`MSSQL procedure ${procedureName} failed`, {
+                statusCode,
+                procedureName,
+                sql: sqlInfo,
+                errorName: error.name,
+                errorCode: error.code,
+            });
+
+            return res.status(statusCode).json({
                 success: false,
-                message: `Ошибка при выполнении процедуры ${procedureName}`,
+                message: isBusinessError
+                    ? `Процедура ${procedureName} вернула ошибку`
+                    : `Ошибка при выполнении процедуры ${procedureName}`,
+                reason: sqlMessage,
                 sql: sqlInfo,
             });
         }
@@ -137,13 +164,14 @@ export function createStoredProcedureHandler(
         try {
             const parsed = schema.safeParse(req.body);
             if (!parsed.success) {
+                const issues = parsed.error?.issues || parsed.error?.errors || [];
                 return res.status(400).json({
                     success: false,
                     message: "Ошибка валидации данных",
-                    errors: parsed.error?.errors?.map((e) => ({
+                    errors: issues.map((e) => ({
                         field: e.path?.join(".") || "",
                         message: e.message || "Ошибка валидации",
-                    })) || [{ message: "Ошибка валидации данных" }],
+                    })),
                 });
             }
 
