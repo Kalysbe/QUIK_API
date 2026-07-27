@@ -4,6 +4,7 @@ import pgPool from "../config/dbPostgres.js";
 /** TradeDate в ответе API: строка dd-mm-yyyy (календарный день в POSTGRES_TIMEZONE или локали сервера Node, не UTC). */
 function formatTradeDateDdMmYyyy(value) {
     if (value == null) return value;
+    if (typeof value === "string" && /^\d{2}-\d{2}-\d{4}$/.test(value)) return value;
     const d = value instanceof Date ? value : new Date(value);
     if (Number.isNaN(d.getTime())) return value;
     const tz = process.env.POSTGRES_TIMEZONE;
