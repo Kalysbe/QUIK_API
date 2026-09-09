@@ -1,14 +1,14 @@
 import logger from "../utils/logger.js";
 import { fetchActiveOrders } from "./ordersService.js";
 
-const DEFAULT_URL = "http://192.168.0.38/cron/quik_ingest.php";
+const PUBLIC_URL = "https://www.kse.kg/cron/quik_ingest.php";
 const DEFAULT_TOKEN = "kse_quik_2026_R8nK4wP2mQ7xL1vB";
 
 function ingestConfig() {
   const enabled = String(process.env.KSE_INGEST_ENABLED || "true").toLowerCase() !== "false";
   return {
     enabled,
-    url: process.env.KSE_INGEST_URL || DEFAULT_URL,
+    url: process.env.KSE_INGEST_URL || PUBLIC_URL,
     token: process.env.KSE_INGEST_TOKEN || DEFAULT_TOKEN,
   };
 }
@@ -27,20 +27,18 @@ function serializeItem(row) {
   return item;
 }
 
-export async function pushActiveOrdersToKse() {
-  const { enabled, url, token } = ingestConfig();
-  if (!enabled) {
-    return { skipped: true };
-  }
+function errorDetails(err) {
+  const cause = err.cause || {};
+  return {
+    error: err.message,
+    cause: cause.message || cause.code || undefined,
+    code: cause.code,
+    address: cause.address,
+    port: cause.port,
+  };
+}
 
-  const rows = await fetchActiveOrders();
-  const items = rows.map(serializeItem);
-  const payload = JSON.stringify({
-    resource: "orders",
-    replace: true,
-    items,
-  });
-
+async function postIngest(url, token, payload) {
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -61,17 +59,49 @@ export async function pushActiveOrdersToKse() {
   }
 
   if (!response.ok) {
-    logger.error("KSE ingest failed", {
-      status: response.status,
-      url,
-      rows: items.length,
-      body: parsed,
-    });
     const err = new Error(`KSE ingest HTTP ${response.status}`);
-    err.details = parsed;
+    err.details = { status: response.status, url, body: parsed };
     throw err;
   }
 
-  logger.info("KSE ingest ok", { url, rows: items.length, response: parsed });
   return parsed;
+}
+
+export async function pushActiveOrdersToKse() {
+  const { enabled, url, token } = ingestConfig();
+  if (!enabled) {
+    return { skipped: true };
+  }
+
+  const rows = await fetchActiveOrders();
+  const items = rows.map(serializeItem);
+  const payload = JSON.stringify({
+    resource: "orders",
+    replace: true,
+    items,
+  });
+
+  const urls = [url];
+  if (url !== PUBLIC_URL) {
+    urls.push(PUBLIC_URL);
+  }
+
+  let lastError;
+  for (const target of urls) {
+    try {
+      const parsed = await postIngest(target, token, payload);
+      logger.info("KSE ingest ok", { url: target, rows: items.length, response: parsed });
+      return parsed;
+    } catch (err) {
+      lastError = err;
+      logger.warn("KSE ingest attempt failed", {
+        url: target,
+        rows: items.length,
+        ...errorDetails(err),
+        details: err.details,
+      });
+    }
+  }
+
+  throw lastError;
 }

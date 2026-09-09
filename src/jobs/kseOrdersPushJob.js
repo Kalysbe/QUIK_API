@@ -15,6 +15,8 @@ async function tick() {
   } catch (err) {
     logger.error("KSE orders push job error", {
       error: err.message,
+      cause: err.cause?.message || err.cause?.code,
+      code: err.cause?.code,
       details: err.details,
     });
   } finally {
