@@ -3,6 +3,7 @@ import app from "./app.js";
 import dotenv from "dotenv";
 import pgPool from "./config/dbPostgres.js"; // подключение к PostgreSQL
 import job from "./cron/cronJob.js"; // ← импортируем задачу
+import { startKseOrdersPushJob, stopKseOrdersPushJob } from "./jobs/kseOrdersPushJob.js";
 import logger from "./utils/logger.js";
 import { 
   setupUnhandledRejectionHandler, 
@@ -41,9 +42,7 @@ async function startServer() {
     // Проверяем подключения перед запуском
     await testConnections();
 
-    // Запускаем cron job
-    // job.start();
-    // logger.info("✅ Cron job запущен");
+    startKseOrdersPushJob();
 
     // Запускаем сервер
     server = app.listen(PORT, HOST, () => {
@@ -84,6 +83,7 @@ function gracefulShutdown(signal) {
 
       // Останавливаем cron job
       job.stop();
+      stopKseOrdersPushJob();
       logger.info('Cron job stopped');
 
       // Закрываем подключения к БД
