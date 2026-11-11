@@ -65,7 +65,7 @@ export async function insertApiLog(log) {
     log.userId ?? null,
     log.role ?? null,
     log.statusCode ?? null,
-    log.responseBody ?? null,
+    responseBodyJson,
     log.responseMessage ?? null,
     log.responseTimeMs ?? null,
     log.errorMessage ?? null,

@@ -3,6 +3,19 @@ import DepoLimit from "../models/DepoLimit.js";
 import { z } from "zod";
 import { writeLimFile } from "../utils/limFileWriter.js";
 import { runFillLimits } from "../utils/fillLimitsRunner.js";
+import { filterRowsForAccess, findForeignValues } from "../services/depositoryAccess.js";
+import { availableValuesFor, sendForbidden } from "../services/availableValues.js";
+
+/* =========================
+   GET /depolimits/accounts — торговые счета, доступные депозитарию по его ключу
+   ========================= */
+export async function getAvailableAccounts(req, res, next) {
+  try {
+    res.json({ success: true, data: await availableValuesFor(req.access, "depo_account") });
+  } catch (err) {
+    next(err);
+  }
+}
 
 const depoLimitItemSchema = z.object({
   FIRM_ID: z.union([z.string().min(1), z.number()]),
@@ -42,7 +55,7 @@ export async function getDepoLimits(req, res, next) {
       options.where = { FirmId: String(firmId).trim() };
     }
     const depoLimits = await DepoLimit.findAll(options);
-    res.json(depoLimits);
+    res.json(filterRowsForAccess(req.access, depoLimits, "depo_account", "Trdacc"));
   } catch (err) {
     next(err);
   }
@@ -58,12 +71,20 @@ export async function createDepoLimitsFile(req, res, next) {
       return res.status(400).json({
         success: false,
         message: "Ошибка валидации данных",
-        errors:
-          parsed.error?.errors?.map((e) => ({
-            field: e.path?.join(".") || "",
-            message: e.message || "Ошибка валидации",
-          })) || [{ message: "Ошибка валидации данных" }],
+        errors: (parsed.error?.issues || []).map((e) => ({
+          field: e.path?.join(".") || "",
+          message: e.message || "Ошибка валидации",
+        })),
       });
+    }
+
+    const foreignAccounts = findForeignValues(
+      req.access,
+      "depo_account",
+      parsed.data.map((item) => item.TRDACCID)
+    );
+    if (foreignAccounts.length > 0) {
+      return sendForbidden(res, req.access, "depo_account", foreignAccounts, "Файл не сформирован.");
     }
 
     const lines = parsed.data.map(formatDepoLimitLine);

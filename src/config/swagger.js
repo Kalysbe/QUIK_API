@@ -25,6 +25,16 @@ const options = {
         description: "Текущий сервер (тот же хост, с которого открыт Swagger)",
       },
     ],
+    components: {
+      securitySchemes: {
+        ApiKeyAuth: {
+          type: "apiKey",
+          in: "header",
+          name: "X-API-Key",
+          description: "API-ключ депозитария, выданный биржей",
+        },
+      },
+    },
   },
   apis: [
     join(__dirname, "../routes/*.js").replace(/\\/g, "/"),

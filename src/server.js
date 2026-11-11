@@ -5,7 +5,8 @@ import pgPool from "./config/dbPostgres.js"; // подключение к Postgr
 import job from "./cron/cronJob.js"; // ← импортируем задачу
 import { startKseOrdersPushJob, stopKseOrdersPushJob } from "./jobs/kseOrdersPushJob.js";
 import logger from "./utils/logger.js";
-import { 
+import { ensureDepositorySchema } from "./repositories/depositoriesRepository.js";
+import {
   setupUnhandledRejectionHandler, 
   setupUncaughtExceptionHandler 
 } from "./middleware/errorHandler.js";
@@ -32,6 +33,14 @@ async function testConnections() {
   } catch (err) {
     logger.error("❌ Ошибка подключения к PostgreSQL", { error: err.message });
     throw err; // Прерываем запуск при ошибке подключения
+  }
+
+  // Таблицы депозитариев и правил доступа (CREATE ... IF NOT EXISTS)
+  await ensureDepositorySchema();
+  logger.info("✅ Таблицы депозитариев готовы");
+
+  if (!process.env.ADMIN_API_KEY?.trim()) {
+    logger.warn("⚠️ ADMIN_API_KEY не задан — админ-панель /admin и /api/logs недоступны");
   }
 
   logger.info("✅ Проверка подключений завершена");

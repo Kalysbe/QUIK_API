@@ -1,5 +1,18 @@
 // src/controllers/tradesController.js
 import pgPool from "../config/dbPostgres.js";
+import { filterRowsForAccess, findForeignValues } from "../services/depositoryAccess.js";
+import { availableValuesFor, sendForbidden } from "../services/availableValues.js";
+
+/* =========================
+   GET /api/trades/classes — классы, доступные депозитарию по его ключу
+   ========================= */
+export async function getAvailableClasses(req, res, next) {
+  try {
+    res.json({ success: true, data: await availableValuesFor(req.access, "trade_class") });
+  } catch (err) {
+    next(err);
+  }
+}
 
 /** Кандидаты имён колонок для маппинга (в порядке приоритета) */
 const COLUMN_CANDIDATES = {
@@ -183,6 +196,22 @@ export async function getTrades(req, res, next) {
 
     const columnNames = new Set(columnsResult.rows.map((row) => row.column_name));
     const filters = { ...req.query };
+    const classCol = resolveColumn(columnNames, COLUMN_CANDIDATES.ClassCode);
+    if (!classCol && !req.access?.isAdmin) {
+      return res.status(500).json({
+        success: false,
+        message: "Не найдена колонка ClassCode в таблице Trades — фильтрация по депозитарию невозможна",
+      });
+    }
+
+    // Запрошен конкретный класс — если он чужой, говорим об этом явно, а не отдаём пустой список.
+    if (classCol && filters[classCol] != null) {
+      const requested = [].concat(filters[classCol]).map(String);
+      const foreign = findForeignValues(req.access, "trade_class", requested);
+      if (foreign.length > 0) {
+        return sendForbidden(res, req.access, "trade_class", foreign);
+      }
+    }
 
     const conditions = [];
     const params = [];
@@ -197,7 +226,7 @@ export async function getTrades(req, res, next) {
     const query = `SELECT * FROM public."${tableName}"${whereClause}`;
 
     const result = await pgPool.query(query, params);
-    res.json(result.rows);
+    res.json(filterRowsForAccess(req.access, result.rows, "trade_class", classCol));
   } catch (err) {
     next(err);
   }

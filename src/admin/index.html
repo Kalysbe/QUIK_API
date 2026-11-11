@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Депозитарии · QUIK API</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --panel: #ffffff; --text: #1d2330; --muted: #667085; --border: #e3e6eb;
+    --accent: #2f5bea; --accent-text: #ffffff; --danger: #c8372d; --ok: #1f8a4c; --warn-bg: #fff4e0; --warn: #9a5b00;
+    --chip: #eef1f6; --code: #f1f3f7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151b; --panel: #1b1f27; --text: #e6e9ef; --muted: #98a2b3; --border: #2c323d;
+      --accent: #6b8cff; --accent-text: #0d1020; --danger: #ff6b5f; --ok: #4cc983; --warn-bg: #3a2c12; --warn: #f3b552;
+      --chip: #262c37; --code: #232833;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px; background: var(--panel); border-bottom: 1px solid var(--border); }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  header small { color: var(--muted); font-weight: 400; margin-left: 8px; }
+  main { max-width: 1180px; margin: 0 auto; padding: 20px 16px 60px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-bottom: 16px; }
+  .card h2 { font-size: 15px; margin: 0 0 4px; }
+  .card p.hint { color: var(--muted); margin: 0 0 12px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .tabs button { background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); padding: 8px 14px; font: inherit; cursor: pointer; }
+  .tabs button.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+  tr:last-child td { border-bottom: none; }
+  .table-wrap { overflow-x: auto; }
+  input, select { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px; min-width: 0; }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  button.btn { font: inherit; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 6px; padding: 6px 11px; cursor: pointer; white-space: nowrap; }
+  button.btn:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  button.danger { color: var(--danger); }
+  button:disabled { opacity: .5; cursor: default; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .row > input[type=text], .row > input[type=password] { flex: 1 1 220px; }
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: var(--chip); }
+  .badge.ok { color: var(--ok); }
+  .badge.off { color: var(--danger); }
+  .badge.none { color: var(--warn); background: var(--warn-bg); }
+  code, .mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+  code { background: var(--code); padding: 1px 6px; border-radius: 4px; }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+  .muted { color: var(--muted); }
+  .error { color: var(--danger); margin-top: 8px; min-height: 1em; }
+  .toast { position: fixed; right: 16px; bottom: 16px; background: var(--text); color: var(--bg); padding: 10px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 420px; }
+  .toast.show { opacity: .95; }
+  dialog { border: 1px solid var(--border); border-radius: 10px; background: var(--panel); color: var(--text); max-width: 560px; width: calc(100% - 32px); }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  .keybox { display: flex; gap: 8px; align-items: center; background: var(--code); border-radius: 6px; padding: 10px; word-break: break-all; margin: 12px 0; }
+  .warn { background: var(--warn-bg); color: var(--warn); padding: 8px 10px; border-radius: 6px; }
+  .summary { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .hidden { display: none !important; }
+  @media (max-width: 640px) { header { padding: 12px 16px; } th, td { padding: 7px 6px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>QUIK API<small>Депозитарии и доступ к данным</small></h1>
+  <button class="btn hidden" id="logoutBtn">Выйти</button>
+</header>
+
+<main>
+  <section class="card" id="loginCard">
+    <h2>Вход администратора</h2>
+    <p class="hint">Введите ключ администратора (переменная <code>ADMIN_API_KEY</code> в .env сервера). Ключ хранится только в этой вкладке.</p>
+    <form class="row" id="loginForm">
+      <input type="password" id="adminKey" placeholder="Ключ администратора" autocomplete="off" required>
+      <button class="btn primary" type="submit">Войти</button>
+    </form>
+    <div class="error" id="loginError"></div>
+  </section>
+
+  <div id="app" class="hidden">
+    <nav class="tabs">
+      <button data-tab="depositories" class="active">Депозитарии</button>
+      <button data-tab="rules">Правила доступа</button>
+      <button data-tab="coverage">Покрытие</button>
+    </nav>
+
+    <section data-panel="depositories">
+      <div class="card">
+        <h2>Новый депозитарий</h2>
+        <p class="hint">После создания будет показан API-ключ — передайте его депозитарию. Повторно ключ не показывается, его можно только перевыпустить.</p>
+        <form class="row" id="createDepForm">
+          <input type="text" id="newDepName" placeholder="Название, например «Центральный депозитарий»" maxlength="200" required>
+          <button class="btn primary" type="submit">Создать</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Депозитарии</h2>
+        <p class="hint">Депозитарий передаёт ключ в заголовке <code>X-API-Key</code> и видит только свои позиции и сделки.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Название</th><th>Статус</th><th>Ключ</th><th>Правил</th><th></th></tr></thead>
+            <tbody id="depTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section data-panel="rules" class="hidden">
+      <div class="card">
+        <h2>Как работают правила</h2>
+        <p class="hint" style="margin:0">
+          Каждое значение принадлежит одному депозитарию. Побеждает самое точное правило:
+          <b>точно</b> → <b>начинается с</b> → <b>содержит</b> → <b>все остальные</b>.
+          Значения, не попавшие ни под одно правило, не видит ни один депозитарий. Регистр букв не важен.
+        </p>
+      </div>
+      <div id="rulesGrid"></div>
+      <div class="card" style="margin-top:16px">
+        <h2>Проверить значение</h2>
+        <form class="row" id="resolveForm">
+          <select id="resolveResource"></select>
+          <input type="text" id="resolveValue" placeholder="Например 1-3101-83" required>
+          <button class="btn" type="submit">Проверить</button>
+        </form>
+        <div id="resolveResult" class="muted" style="margin-top:8px"></div>
+      </div>
+    </section>
+
+    <section data-panel="coverage" class="hidden">
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <h2>Покрытие данных</h2>
+            <p class="hint" style="margin:0">Все счета, тэги и классы, которые есть в базе, и кому они принадлежат по текущим правилам.</p>
+          </div>
+          <div class="row">
+            <label class="row" style="gap:6px"><input type="checkbox" id="onlyUnassigned"> только не назначенные</label>
+            <button class="btn" id="refreshCoverage">Обновить</button>
+          </div>
+        </div>
+      </div>
+      <div class="grid3" id="coverageGrid"></div>
+    </section>
+  </div>
+</main>
+
+<dialog id="keyDialog">
+  <h2 style="margin-top:0;font-size:16px" id="keyDialogTitle">API-ключ</h2>
+  <div class="warn">Скопируйте ключ сейчас — после закрытия окна он больше не будет показан.</div>
+  <div class="keybox"><span class="mono" id="keyValue" style="flex:1"></span><button class="btn" id="copyKey">Копировать</button></div>
+  <div class="row" style="justify-content:flex-end"><button class="btn primary" id="closeKey">Готово</button></div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const RESOURCES = {
+    depo_account: { title: "Торговые счета", subtitle: "DepoLimits · поле Trdacc / TRDACCID" },
+    money_tag: { title: "Тэги", subtitle: "MoneyLimits · поле Tag / TAG" },
+    trade_class: { title: "Классы", subtitle: "Trades · поле ClassCode" },
+  };
+  const MATCH = { exact: "Точно", prefix: "Начинается с", contains: "Содержит", default: "Все остальные" };
+  const STORAGE_KEY = "quikAdminKey";
+
+  let adminKey = null;
+  let depositories = [];
+  let rules = [];
+  let classes = [];
+  let tags = [];
+  let coverage = null;
+
+  const $ = (sel) => document.querySelector(sel);
+  const el = (tag, attrs = {}, ...children) => {
+    const node = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === "class") node.className = v;
+      else if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
+      else if (v !== undefined && v !== null && v !== false) node.setAttribute(k, v === true ? "" : v);
+    }
+    for (const c of children.flat()) {
+      if (c === null || c === undefined || c === false) continue;
+      node.append(c instanceof Node ? c : document.createTextNode(String(c)));
+    }
+    return node;
+  };
+
+  function storageGet() { try { return sessionStorage.getItem(STORAGE_KEY); } catch { return null; } }
+  function storageSet(v) { try { v ? sessionStorage.setItem(STORAGE_KEY, v) : sessionStorage.removeItem(STORAGE_KEY); } catch {} }
+
+  function toast(text) {
+    const t = $("#toast");
+    t.textContent = text;
+    t.classList.add("show");
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => t.classList.remove("show"), 3500);
+  }
+
+  async function api(method, path, body) {
+    const res = await fetch("/api/admin" + path, {
+      method,
+      headers: { "X-API-Key": adminKey, "Content-Type": "application/json", Accept: "application/json" },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const details = Array.isArray(data.errors) && data.errors.length ? ": " + data.errors.map((e) => e.message).join(", ") : "";
+      const err = new Error((data.message || "Ошибка " + res.status) + details);
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+
+  async function guarded(fn) {
+    try { await fn(); }
+    catch (e) {
+      if (e.status === 401 || e.status === 403) { logout(); $("#loginError").textContent = e.message; return; }
+      toast(e.message);
+    }
+  }
+
+  function showKey(title, key) {
+    $("#keyDialogTitle").textContent = title;
+    $("#keyValue").textContent = key;
+    $("#keyDialog").showModal();
+  }
+  $("#copyKey").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText($("#keyValue").textContent); toast("Ключ скопирован"); }
+    catch { toast("Не удалось скопировать — выделите ключ вручную"); }
+  });
+  $("#closeKey").addEventListener("click", () => { $("#keyValue").textContent = ""; $("#keyDialog").close(); });
+
+  /* ---------- Вход ---------- */
+  async function login(key) {
+    adminKey = key;
+    await api("GET", "/depositories");
+    storageSet(key);
+    $("#loginCard").classList.add("hidden");
+    $("#app").classList.remove("hidden");
+    $("#logoutBtn").classList.remove("hidden");
+    await reloadAll();
+  }
+  function logout() {
+    adminKey = null;
+    storageSet(null);
+    $("#app").classList.add("hidden");
+    $("#logoutBtn").classList.add("hidden");
+    $("#loginCard").classList.remove("hidden");
+  }
+  $("#loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    $("#loginError").textContent = "";
+    try { await login($("#adminKey").value.trim()); $("#adminKey").value = ""; }
+    catch (err) { adminKey = null; $("#loginError").textContent = err.message; }
+  });
+  $("#logoutBtn").addEventListener("click", logout);
+
+  /* ---------- Вкладки ---------- */
+  document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll(".tabs button").forEach((x) => x.classList.toggle("active", x === b));
+    document.querySelectorAll("[data-panel]").forEach((p) => p.classList.toggle("hidden", p.dataset.panel !== b.dataset.tab));
+    if (b.dataset.tab === "coverage") guarded(loadCoverage);
+  }));
+
+  async function reloadAll() {
+    const [d, r, c, t] = await Promise.all([
+      api("GET", "/depositories"), api("GET", "/rules"), api("GET", "/classes"), api("GET", "/tags"),
+    ]);
+    depositories = d.data;
+    rules = r.data;
+    classes = c.data;
+    tags = t.data;
+    renderDepositories();
+    renderRules();
+    if (!$('[data-panel="coverage"]').classList.contains("hidden")) await loadCoverage();
+  }
+
+  /* ---------- Депозитарии ---------- */
+  function renderDepositories() {
+    const tbody = $("#depTable");
+    tbody.replaceChildren();
+    if (!depositories.length) {
+      tbody.append(el("tr", {}, el("td", { colspan: 5, class: "muted" }, "Депозитариев пока нет")));
+      return;
+    }
+    for (const d of depositories) {
+      tbody.append(el("tr", {},
+        el("td", {}, el("b", {}, d.name)),
+        el("td", {}, d.is_active ? el("span", { class: "badge ok" }, "активен") : el("span", { class: "badge off" }, "отключён")),
+        el("td", {}, d.has_key ? el("span", { class: "mono" }, "••••" + (d.api_key_hint || "")) : el("span", { class: "badge none" }, "нет ключа")),
+        el("td", {}, d.rules_count),
+        el("td", {}, el("div", { class: "actions" },
+          el("button", { class: "btn", onclick: () => renameDep(d) }, "Переименовать"),
+          el("button", { class: "btn", onclick: () => toggleDep(d) }, d.is_active ? "Отключить" : "Включить"),
+          el("button", { class: "btn", onclick: () => regenKey(d) }, d.has_key ? "Новый ключ" : "Выпустить ключ"),
+          d.has_key ? el("button", { class: "btn danger", onclick: () => revokeKey(d) }, "Отозвать ключ") : null,
+          el("button", { class: "btn danger", onclick: () => deleteDep(d) }, "Удалить"),
+        )),
+      ));
+    }
+  }
+
+  $("#createDepForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    guarded(async () => {
+      const name = $("#newDepName").value.trim();
+      const res = await api("POST", "/depositories", { name });
+      $("#newDepName").value = "";
+      await reloadAll();
+      showKey("Ключ для «" + res.data.name + "»", res.api_key);
+    });
+  });
+
+  const renameDep = (d) => guarded(async () => {
+    const name = prompt("Новое название", d.name);
+    if (!name || name.trim() === d.name) return;
+    await api("PATCH", "/depositories/" + d.id, { name: name.trim() });
+    await reloadAll();
+  });
+  const toggleDep = (d) => guarded(async () => {
+    if (d.is_active && !confirm("Отключить «" + d.name + "»? Его ключ перестанет давать доступ к данным.")) return;
+    await api("PATCH", "/depositories/" + d.id, { is_active: !d.is_active });
+    await reloadAll();
+  });
+  const regenKey = (d) => guarded(async () => {
+    if (d.has_key && !confirm("Выпустить новый ключ для «" + d.name + "»? Старый ключ сразу перестанет работать.")) return;
+    const res = await api("POST", "/depositories/" + d.id + "/regenerate-key");
+    await reloadAll();
+    showKey("Новый ключ для «" + d.name + "»", res.api_key);
+  });
+  const revokeKey = (d) => guarded(async () => {
+    if (!confirm("Отозвать ключ «" + d.name + "»? Депозитарий потеряет доступ, пока не будет выпущен новый ключ.")) return;
+    await api("POST", "/depositories/" + d.id + "/revoke-key");
+    await reloadAll();
+    toast("Ключ отозван");
+  });
+  const deleteDep = (d) => guarded(async () => {
+    if (!confirm("Удалить «" + d.name + "» вместе со всеми его правилами? Это нельзя отменить.")) return;
+    await api("DELETE", "/depositories/" + d.id);
+    await reloadAll();
+    toast("Депозитарий удалён");
+  });
+
+  /* ---------- Правила ---------- */
+  function depOptions() {
+    return depositories.map((d) => el("option", { value: d.id }, d.name + (d.is_active ? "" : " (отключён)")));
+  }
+
+  function renderRules() {
+    const grid = $("#rulesGrid");
+    grid.replaceChildren();
+    for (const [resource, meta] of Object.entries(RESOURCES)) {
+      if (CHOICE[resource]) {
+        grid.append(renderChoiceMatrix(resource, meta));
+        continue;
+      }
+      const list = rules.filter((r) => r.resource === resource);
+      const tbody = el("tbody", {});
+      if (!list.length) tbody.append(el("tr", {}, el("td", { colspan: 4, class: "muted" }, "Правил нет — эти данные не видит ни один депозитарий")));
+      for (const r of list) {
+        tbody.append(el("tr", {},
+          el("td", {}, r.depository_name),
+          el("td", {}, MATCH[r.match_type]),
+          el("td", {}, r.match_type === "default" ? el("span", { class: "muted" }, "—") : el("code", {}, r.value)),
+          el("td", {}, el("button", { class: "btn danger", onclick: () => deleteRule(r) }, "Удалить")),
+        ));
+      }
+
+      const depSelect = el("select", { required: true, "aria-label": "Депозитарий" }, depOptions());
+      const matchSelect = el("select", { "aria-label": "Условие" }, Object.entries(MATCH).map(([k, v]) => el("option", { value: k }, v)));
+      const valueInput = el("input", { type: "text", placeholder: "Значение, например 1-3101", maxlength: 100, "aria-label": "Значение" });
+      matchSelect.addEventListener("change", () => {
+        valueInput.disabled = matchSelect.value === "default";
+        if (valueInput.disabled) valueInput.value = "";
+      });
+      const form = el("form", { class: "row", style: "margin-top:12px" }, depSelect, matchSelect, valueInput,
+        el("button", { class: "btn primary", type: "submit", disabled: !depositories.length }, "Добавить"));
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        guarded(async () => {
+          await api("POST", "/rules", {
+            depository_id: Number(depSelect.value),
+            resource,
+            match_type: matchSelect.value,
+            value: valueInput.value.trim(),
+          });
+          await reloadAll();
+          toast("Правило добавлено");
+        });
+      });
+
+      grid.append(el("div", { class: "card" },
+        el("h2", {}, meta.title),
+        el("p", { class: "hint" }, meta.subtitle),
+        el("div", { class: "table-wrap" }, el("table", {},
+          el("thead", {}, el("tr", {}, el("th", {}, "Депозитарий"), el("th", {}, "Условие"), el("th", {}, "Значение"), el("th", {}))),
+          tbody)),
+        depositories.length ? form : el("p", { class: "muted" }, "Сначала создайте депозитарий."),
+      ));
+    }
+
+    const rs = $("#resolveResource");
+    if (!rs.options.length) {
+      for (const [k, v] of Object.entries(RESOURCES)) rs.append(el("option", { value: k }, v.title));
+    }
+  }
+
+  /* Классы и тэги: галочка = правило «точно» для значения у выбранного депозитария */
+  const CHOICE = {
+    trade_class: {
+      items: () => classes,
+      column: "Класс",
+      word: "Класс",
+      hint: "Отметьте, какому депозитарию принадлежит класс. Сделки по классу без галочки не видит ни один депозитарий. ",
+      extra: "Дополнительные правила по классам (галочка важнее их):",
+    },
+    money_tag: {
+      items: () => tags,
+      column: "Тэг",
+      word: "Тэг",
+      hint: "Отметьте, какому депозитарию принадлежит тэг. Денежные позиции с тэгом без галочки не видит и не может загрузить ни один депозитарий. ",
+      extra: "Дополнительные правила по тэгам (галочка важнее их):",
+    },
+  };
+
+  function renderChoiceMatrix(resource, meta) {
+    const cfg = CHOICE[resource];
+    const card = el("div", { class: "card" }, el("h2", {}, meta.title), el("p", { class: "hint" }, meta.subtitle));
+    if (!depositories.length) {
+      card.append(el("p", { class: "muted" }, "Сначала создайте депозитарий."));
+      return card;
+    }
+
+    const resourceRules = rules.filter((r) => r.resource === resource);
+    const exactByCode = new Map(
+      resourceRules.filter((r) => r.match_type === "exact").map((r) => [r.value.trim().toUpperCase(), r])
+    );
+    const otherRules = resourceRules.filter((r) => r.match_type !== "exact");
+
+    // Значения из API + значения, у которых есть правило, но их уже нет в базе
+    const rows = cfg.items().map((c) => ({ code: c.code, name: c.name }));
+    const known = new Set(rows.map((c) => c.code.trim().toUpperCase()));
+    for (const [code, r] of exactByCode) {
+      if (!known.has(code)) rows.push({ code: r.value, name: null, missing: true });
+    }
+
+    const hasNames = rows.some((c) => c.name && c.name !== c.code);
+    const assigned = rows.filter((c) => exactByCode.has(c.code.trim().toUpperCase())).length;
+    card.append(
+      el("p", { class: "hint" },
+        cfg.hint, "Изменения сохраняются сразу."),
+      el("div", { class: "summary" },
+        el("span", { class: "badge" }, "Назначено: " + assigned + " из " + rows.length),
+        rows.length - assigned ? el("span", { class: "badge none" }, "Без депозитария: " + (rows.length - assigned)) : null),
+    );
+
+    const tbody = el("tbody", {});
+    for (const c of rows) {
+      const owner = exactByCode.get(c.code.trim().toUpperCase());
+      tbody.append(el("tr", {},
+        el("td", {}, el("code", {}, c.code), c.missing ? el("span", { class: "badge none", style: "margin-left:6px" }, "нет в базе") : null),
+        hasNames ? el("td", { class: "muted" }, c.name && c.name !== c.code ? c.name : "") : null,
+        depositories.map((d) => {
+          const box = el("input", {
+            type: "checkbox",
+            "aria-label": c.code + " — " + d.name,
+            checked: owner?.depository_id === d.id,
+          });
+          box.addEventListener("change", () => toggleChoice(resource, c.code, d, owner, box));
+          return el("td", { style: "text-align:center" }, box);
+        }),
+      ));
+    }
+
+    card.append(el("div", { class: "table-wrap" }, el("table", {},
+      el("thead", {}, el("tr", {},
+        el("th", {}, cfg.column), hasNames ? el("th", {}, "Название") : null,
+        depositories.map((d) => el("th", { style: "text-align:center" }, d.name + (d.is_active ? "" : " (откл.)"))))),
+      tbody)));
+
+    if (otherRules.length) {
+      card.append(
+        el("p", { class: "hint", style: "margin-top:12px" }, cfg.extra),
+        el("div", { class: "table-wrap" }, el("table", {}, el("tbody", {}, otherRules.map((r) => el("tr", {},
+          el("td", {}, r.depository_name),
+          el("td", {}, MATCH[r.match_type]),
+          el("td", {}, r.match_type === "default" ? "—" : el("code", {}, r.value)),
+          el("td", {}, el("button", { class: "btn danger", onclick: () => deleteRule(r) }, "Удалить")))))))
+      );
+    }
+    return card;
+  }
+
+  let choiceSaving = false;
+  function toggleChoice(resource, code, dep, owner, box) {
+    if (choiceSaving) { box.checked = !box.checked; return; }
+    const checked = box.checked;
+    guarded(async () => {
+      choiceSaving = true;
+      try {
+        if (checked) {
+          if (owner && owner.depository_id !== dep.id) {
+            if (!confirm(CHOICE[resource].word + " " + code + " сейчас у «" + owner.depository_name + "». Передать его «" + dep.name + "»?")) {
+              box.checked = false;
+              return;
+            }
+            await api("DELETE", "/rules/" + owner.id);
+          }
+          if (!owner || owner.depository_id !== dep.id) {
+            await api("POST", "/rules", { depository_id: dep.id, resource, match_type: "exact", value: code });
+          }
+          toast(code + " → " + dep.name);
+        } else if (owner && owner.depository_id === dep.id) {
+          await api("DELETE", "/rules/" + owner.id);
+          toast(code + ": депозитарий снят");
+        }
+      } finally {
+        choiceSaving = false;
+        await reloadAll();
+      }
+    });
+  }
+
+  const deleteRule = (r) => guarded(async () => {
+    const what = r.match_type === "default" ? "«все остальные»" : MATCH[r.match_type].toLowerCase() + " «" + r.value + "»";
+    if (!confirm("Удалить правило " + what + " у «" + r.depository_name + "»?")) return;
+    await api("DELETE", "/rules/" + r.id);
+    await reloadAll();
+    toast("Правило удалено");
+  });
+
+  $("#resolveForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    guarded(async () => {
+      const resource = $("#resolveResource").value;
+      const value = $("#resolveValue").value.trim();
+      const res = await api("GET", "/resolve?resource=" + encodeURIComponent(resource) + "&value=" + encodeURIComponent(value));
+      const out = $("#resolveResult");
+      out.replaceChildren();
+      out.append(el("code", {}, value), " → ",
+        res.data.depository ? el("b", {}, res.data.depository.name) : el("span", { class: "badge none" }, "никому (не видит ни один депозитарий)"));
+    });
+  });
+
+  /* ---------- Покрытие ---------- */
+  async function loadCoverage() {
+    coverage = (await api("GET", "/coverage")).data;
+    renderCoverage();
+  }
+  $("#refreshCoverage").addEventListener("click", () => guarded(loadCoverage));
+  $("#onlyUnassigned").addEventListener("change", renderCoverage);
+
+  function renderCoverage() {
+    const grid = $("#coverageGrid");
+    grid.replaceChildren();
+    if (!coverage) return;
+    const onlyUnassigned = $("#onlyUnassigned").checked;
+    for (const [resource, meta] of Object.entries(RESOURCES)) {
+      const items = coverage[resource] || [];
+      const counts = new Map();
+      for (const it of items) {
+        const key = it.depository_name || "Не назначено";
+        counts.set(key, (counts.get(key) || 0) + 1);
+      }
+      const shown = onlyUnassigned ? items.filter((it) => !it.depository_id) : items;
+      const tbody = el("tbody", {});
+      if (!shown.length) tbody.append(el("tr", {}, el("td", { colspan: 2, class: "muted" }, onlyUnassigned ? "Все значения назначены" : "Нет данных")));
+      for (const it of shown) {
+        tbody.append(el("tr", {},
+          el("td", {}, el("code", {}, it.value)),
+          el("td", {}, it.depository_name ? it.depository_name : el("span", { class: "badge none" }, "не назначено")),
+        ));
+      }
+      grid.append(el("div", { class: "card" },
+        el("h2", {}, meta.title),
+        el("p", { class: "hint" }, meta.subtitle),
+        el("div", { class: "summary" }, [...counts.entries()].map(([name, n]) =>
+          el("span", { class: "badge" + (name === "Не назначено" ? " none" : "") }, name + ": " + n))),
+        el("div", { class: "table-wrap" }, el("table", {},
+          el("thead", {}, el("tr", {}, el("th", {}, "Значение"), el("th", {}, "Депозитарий"))),
+          tbody)),
+      ));
+    }
+  }
+
+  const saved = storageGet();
+  if (saved) login(saved).catch(() => { adminKey = null; storageSet(null); });
+})();
+</script>
+</body>
+</html>

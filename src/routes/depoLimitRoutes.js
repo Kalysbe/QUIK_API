@@ -2,9 +2,35 @@ import express from "express";
 import {
   getDepoLimits,
   createDepoLimitsFile,
+  getAvailableAccounts,
 } from "../controllers/depoLimitController.js";
+import { requireDepositoryOrAdmin } from "../middleware/depositoryAuth.js";
 
 const router = express.Router();
+
+/**
+ * @swagger
+ * /api/depolimits/accounts:
+ *   get:
+ *     summary: Торговые счета, доступные вашему депозитарию
+ *     tags: [DepoLimits]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     description: |
+ *       Торговые счета (TRDACCID), закреплённые за депозитарием, чей API-ключ передан в X-API-Key.
+ *       В POST /api/depolimits принимаются только они, остальные отклоняются с 403 FORBIDDEN_ACCOUNT.
+ *     responses:
+ *       200:
+ *         description: Список счетов
+ *         content:
+ *           application/json:
+ *             example: { "success": true, "data": ["1-3101-2002", "1-3101-2003"] }
+ *       401:
+ *         description: Не передан или неверный API-ключ
+ *       403:
+ *         description: Депозитарий отключён
+ */
+router.get("/accounts", requireDepositoryOrAdmin, getAvailableAccounts);
 
 /**
  * @swagger
@@ -12,6 +38,8 @@ const router = express.Router();
  *   get:
  *     summary: Получить список позиций по инструментам
  *     tags: [DepoLimits]
+ *     security:
+ *       - ApiKeyAuth: []
  *     description: Возвращает список всех позиций по инструментам
  *     parameters:
  *       - in: query
@@ -53,7 +81,7 @@ const router = express.Router();
  *       500:
  *         description: Ошибка сервера
  */
-router.get("/", getDepoLimits);
+router.get("/", requireDepositoryOrAdmin, getDepoLimits);
 
 /**
  * @swagger
@@ -61,6 +89,8 @@ router.get("/", getDepoLimits);
  *   post:
  *     summary: Сформировать .lim файл для DEPO
  *     tags: [DepoLimits]
+ *     security:
+ *       - ApiKeyAuth: []
  *     description: Принимает массив DEPO-лимитов и формирует файл limits.lim
  *     requestBody:
  *       required: true
@@ -109,10 +139,22 @@ router.get("/", getDepoLimits);
  *                   type: number
  *       400:
  *         description: Ошибка валидации данных
+ *       401:
+ *         description: Не передан или неверный API-ключ
+ *       403:
+ *         description: Торговый счёт не принадлежит вашему депозитарию (файл не сформирован)
+ *         content:
+ *           application/json:
+ *             example:
+ *               success: false
+ *               message: "Торговый счёт 1-3001-2002 не принадлежит вашему депозитарию. Доступные вам счета: 1-3101-2002. Файл не сформирован."
+ *               error: FORBIDDEN_ACCOUNT
+ *               accounts: ["1-3001-2002"]
+ *               available_accounts: ["1-3101-2002"]
  *       500:
  *         description: Ошибка сервера
  */
-router.post("/", createDepoLimitsFile);
+router.post("/", requireDepositoryOrAdmin, createDepoLimitsFile);
 
 export default router;
 

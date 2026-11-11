@@ -1,10 +1,36 @@
 import express from "express";
+import { requireDepositoryOrAdmin } from "../middleware/depositoryAuth.js";
 import {
   getMoneyLimits,
   createMoneyLimitsFile,
+  getAvailableTags,
 } from "../controllers/moneyLimitController.js";
 
 const router = express.Router();
+
+/**
+ * @swagger
+ * /api/moneylimits/tags:
+ *   get:
+ *     summary: Тэги, доступные вашему депозитарию
+ *     tags: [MoneyLimits]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     description: |
+ *       Список тэгов (TAG), которые закреплены за депозитарием, чей API-ключ передан в X-API-Key.
+ *       В POST /api/moneylimits принимаются только эти тэги, остальные отклоняются с 403 FORBIDDEN_TAG.
+ *     responses:
+ *       200:
+ *         description: Список тэгов
+ *         content:
+ *           application/json:
+ *             example: { "success": true, "data": ["EQTV", "FX"] }
+ *       401:
+ *         description: Не передан или неверный API-ключ
+ *       403:
+ *         description: Депозитарий отключён
+ */
+router.get("/tags", requireDepositoryOrAdmin, getAvailableTags);
 
 /**
  * @swagger
@@ -12,6 +38,8 @@ const router = express.Router();
  *   get:
  *     summary: Получить список денежных лимитов
  *     tags: [MoneyLimits]
+ *     security:
+ *       - ApiKeyAuth: []
  *     description: Возвращает список всех денежных лимитов из базы данных
  *     parameters:
  *       - in: query
@@ -55,7 +83,7 @@ const router = express.Router();
  *       500:
  *         description: Ошибка сервера
  */
-router.get("/", getMoneyLimits);
+router.get("/", requireDepositoryOrAdmin, getMoneyLimits);
 
 /**
  * @swagger
@@ -63,6 +91,8 @@ router.get("/", getMoneyLimits);
  *   post:
  *     summary: Сформировать .lim файл для MONEY
  *     tags: [MoneyLimits]
+ *     security:
+ *       - ApiKeyAuth: []
  *     description: Принимает массив MONEY-лимитов и формирует файл limits.lim
  *     requestBody:
  *       required: true
@@ -114,10 +144,22 @@ router.get("/", getMoneyLimits);
  *                   type: number
  *       400:
  *         description: Ошибка валидации данных
+ *       401:
+ *         description: Не передан или неверный API-ключ
+ *       403:
+ *         description: Тэг не принадлежит вашему депозитарию (файл не сформирован)
+ *         content:
+ *           application/json:
+ *             example:
+ *               success: false
+ *               message: "Тэг EQTV не принадлежит вашему депозитарию. Доступные вам тэги: FX. Файл не сформирован."
+ *               error: FORBIDDEN_TAG
+ *               tags: ["EQTV"]
+ *               available_tags: ["FX"]
  *       500:
  *         description: Ошибка сервера
  */
-router.post("/", createMoneyLimitsFile);
+router.post("/", requireDepositoryOrAdmin, createMoneyLimitsFile);
 
 export default router;
 

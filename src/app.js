@@ -35,6 +35,10 @@ import usTradesRoutes from "./routes/usTradesRoutes.js";
 import ordersRoutes from "./routes/ordersRoutes.js";
 import paramsRoutes from "./routes/paramsRoutes.js";
 import logsRoutes from "./routes/logsRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import { requireAdmin } from "./middleware/depositoryAuth.js";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 import { requestLogger } from "./utils/logger.js";
 import { ipWhitelistMiddleware } from "./middleware/ipWhitelist.js";
 import { apiLoggerMiddleware } from "./middleware/apiLogger.js";
@@ -82,8 +86,6 @@ app.use(
   swaggerUi.setup(swaggerSpec, {
     customCss: `
       .swagger-ui .topbar { display: none }
-      .swagger-ui .auth-wrapper { display: none !important; }
-      .swagger-ui .authorization__btn { display: none !important; }
     `,
     customSiteTitle: "QUIK Module API Documentation",
     swaggerOptions: {
@@ -93,10 +95,14 @@ app.use(
   })
 );
 
+// Админ-панель депозитариев (статическая страница; данные — через /api/admin с ключом администратора)
+const adminPanelDir = join(dirname(fileURLToPath(import.meta.url)), "admin");
+app.use("/admin", express.static(adminPanelDir, { index: "index.html" }));
+
 // Установка заголовков (исключая Swagger UI и статические файлы)
 app.use((req, res, next) => {
   // Не устанавливаем Content-Type для Swagger UI и статических файлов
-  if (!req.path.startsWith("/api-docs") && !req.path.startsWith("/swagger-ui")) {
+  if (!req.path.startsWith("/api-docs") && !req.path.startsWith("/swagger-ui") && !req.path.startsWith("/admin")) {
     res.setHeader("Content-Type", "application/json; charset=utf-8");
   }
   next();
@@ -182,7 +188,9 @@ app.use("/api/trades", tradesRoutes);
 app.use("/api/us-trades", usTradesRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/params", paramsRoutes);
-app.use("/api/logs", logsRoutes);
+// Логи содержат тела запросов/ответов всех депозитариев — только для администратора
+app.use("/api/logs", requireAdmin, logsRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Обработка 404
 app.use(notFoundHandler);

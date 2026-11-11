@@ -3,6 +3,19 @@ import MoneyLimit from "../models/MoneyLimit.js";
 import { z } from "zod";
 import { writeLimFile } from "../utils/limFileWriter.js";
 import { runFillLimits } from "../utils/fillLimitsRunner.js";
+import { filterRowsForAccess, findForeignValues } from "../services/depositoryAccess.js";
+import { availableValuesFor, sendForbidden } from "../services/availableValues.js";
+
+/* =========================
+   GET /moneylimits/tags — тэги, доступные депозитарию по его ключу
+   ========================= */
+export async function getAvailableTags(req, res, next) {
+  try {
+    res.json({ success: true, data: await availableValuesFor(req.access, "money_tag") });
+  } catch (err) {
+    next(err);
+  }
+}
 
 const moneyLimitItemSchema = z.object({
   FIRM_ID: z.union([z.string().min(1), z.number()]),
@@ -44,7 +57,7 @@ export async function getMoneyLimits(req, res, next) {
       options.where = { FirmId: String(firmId).trim() };
     }
     const moneyLimits = await MoneyLimit.findAll(options);
-    res.json(moneyLimits);
+    res.json(filterRowsForAccess(req.access, moneyLimits, "money_tag", "Tag"));
   } catch (err) {
     next(err);
   }
@@ -60,12 +73,20 @@ export async function createMoneyLimitsFile(req, res, next) {
       return res.status(400).json({
         success: false,
         message: "Ошибка валидации данных",
-        errors:
-          parsed.error?.errors?.map((e) => ({
-            field: e.path?.join(".") || "",
-            message: e.message || "Ошибка валидации",
-          })) || [{ message: "Ошибка валидации данных" }],
+        errors: (parsed.error?.issues || []).map((e) => ({
+          field: e.path?.join(".") || "",
+          message: e.message || "Ошибка валидации",
+        })),
       });
+    }
+
+    const foreignTags = findForeignValues(
+      req.access,
+      "money_tag",
+      parsed.data.map((item) => item.TAG)
+    );
+    if (foreignTags.length > 0) {
+      return sendForbidden(res, req.access, "money_tag", foreignTags, "Файл не сформирован.");
     }
 
     const lines = parsed.data.map(formatMoneyLimitLine);

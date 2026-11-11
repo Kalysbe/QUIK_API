@@ -14,7 +14,9 @@ const SENSITIVE_KEYS = [
   "authorization",
   "cookie",
   "secret",
-  "api_key"
+  "api_key",
+  "apikey",
+  "x-api-key"
 ];
 
 function isObject(value) {
@@ -185,12 +187,16 @@ export function apiLoggerMiddleware(req, res, next) {
 
   let responseBodyRaw;
   let responseMessage;
+  let capturedFromJson = false;
 
   const originalJson = res.json.bind(res);
   const originalSend = res.send.bind(res);
 
   res.json = (body) => {
+    // Express 5 внутри res.json вызывает res.send со строкой — сохраняем исходный объект,
+    // чтобы маскирование чувствительных полей (api_key и т.п.) работало и для ответа.
     responseBodyRaw = body;
+    capturedFromJson = true;
     if (body && typeof body === "object" && "message" in body) {
       responseMessage = body.message;
     } else if (typeof body === "string") {
@@ -200,11 +206,13 @@ export function apiLoggerMiddleware(req, res, next) {
   };
 
   res.send = (body) => {
-    responseBodyRaw = body;
-    if (body && typeof body === "object" && "message" in body) {
-      responseMessage = body.message;
-    } else if (typeof body === "string") {
-      responseMessage = body;
+    if (!capturedFromJson) {
+      responseBodyRaw = body;
+      if (body && typeof body === "object" && "message" in body) {
+        responseMessage = body.message;
+      } else if (typeof body === "string") {
+        responseMessage = body;
+      }
     }
     return originalSend(body);
   };

@@ -1,7 +1,37 @@
 import express from "express";
-import { getTrades, getAggregatedTrades, getTradesSecCodes } from "../controllers/tradesController.js";
+import {
+  getTrades,
+  getAggregatedTrades,
+  getTradesSecCodes,
+  getAvailableClasses,
+} from "../controllers/tradesController.js";
+import { requireDepositoryOrAdmin } from "../middleware/depositoryAuth.js";
 
 const router = express.Router();
+
+/**
+ * @swagger
+ * /api/trades/classes:
+ *   get:
+ *     summary: Классы, доступные вашему депозитарию
+ *     tags: [Trades]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     description: |
+ *       Классы (ClassCode), закреплённые за депозитарием, чей API-ключ передан в X-API-Key.
+ *       GET /api/trades возвращает сделки только по этим классам.
+ *     responses:
+ *       200:
+ *         description: Список классов
+ *         content:
+ *           application/json:
+ *             example: { "success": true, "data": ["EQTV", "GSCB"] }
+ *       401:
+ *         description: Не передан или неверный API-ключ
+ *       403:
+ *         description: Депозитарий отключён
+ */
+router.get("/classes", requireDepositoryOrAdmin, getAvailableClasses);
 
 /**
  * @swagger
@@ -115,7 +145,11 @@ router.get("/sec-codes", getTradesSecCodes);
  *   get:
  *     summary: Получить список сделок
  *     tags: [Trades]
- *     description: Возвращает все сделки из таблицы Trades. Фильтрация через query-параметры. Пример GET /api/trades?FirmId=ABC&SecCode=GAZP
+ *     security:
+ *       - ApiKeyAuth: []
+ *     description: |
+ *       Возвращает сделки из таблицы Trades. Фильтрация через query-параметры. Пример GET /api/trades?FirmId=ABC&SecCode=GAZP
+ *       Возвращаются только сделки по классам, закреплённым за вашим депозитарием.
  *     parameters:
  *       - in: query
  *         name: FirmId
@@ -133,10 +167,22 @@ router.get("/sec-codes", getTradesSecCodes);
  *               items:
  *                 type: object
  *                 additionalProperties: true
+ *       401:
+ *         description: Не передан или неверный API-ключ
+ *       403:
+ *         description: Запрошен класс (ClassCode), не принадлежащий вашему депозитарию
+ *         content:
+ *           application/json:
+ *             example:
+ *               success: false
+ *               message: "Класс GSCB не принадлежит вашему депозитарию. Доступные вам классы: EQTV."
+ *               error: FORBIDDEN_CLASS
+ *               classes: ["GSCB"]
+ *               available_classes: ["EQTV"]
  *       500:
  *         description: Ошибка сервера
  */
-router.get("/", getTrades);
+router.get("/", requireDepositoryOrAdmin, getTrades);
 
 export default router;
 
