@@ -1,5 +1,6 @@
 import express from "express";
 import { getTrdaccs } from "../controllers/trdaccController.js";
+import { requireDepositoryOrAdmin } from "../middleware/depositoryAuth.js";
 
 const router = express.Router();
 
@@ -9,7 +10,10 @@ const router = express.Router();
  *   get:
  *     summary: Получить список торговых счетов
  *     tags: [TradeAccounts]
- *     description: Возвращает список торговых счетов. Можно фильтровать по FirmId через query параметр
+ *     security:
+ *       - ApiKeyAuth: []
+ *     description: |
+ *       Возвращает торговые счета, закреплённые за вашим депозитарием. Можно фильтровать по FirmId через query параметр.
  *     parameters:
  *       - in: query
  *         name: FirmId
@@ -44,10 +48,14 @@ const router = express.Router();
  *                     type: string
  *                   DepAccId:
  *                     type: string
+ *       401:
+ *         description: Не передан или неверный API-ключ
+ *       403:
+ *         description: Депозитарий отключён
  *       500:
  *         description: Ошибка сервера
  */
-router.get("/", getTrdaccs);
+router.get("/", requireDepositoryOrAdmin, getTrdaccs);
 
 export default router;
 

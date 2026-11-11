@@ -38,7 +38,7 @@ Swagger: `http://172.23.10.85:5000/api-docs`
 
 ### Авторизация
 
-Позиции (`/api/depolimits`, `/api/moneylimits`) и сделки (`GET /api/trades`) доступны только с API-ключом депозитария в заголовке `X-API-Key`. Ключ выдаёт биржа.
+Торговые счета (`GET /api/trdaccs`), позиции (`/api/depolimits`, `/api/moneylimits`) и сделки (`GET /api/trades`) доступны только с API-ключом депозитария в заголовке `X-API-Key`. Ключ выдаёт биржа.
 
 ```bash
 curl -H "X-API-Key: <ваш ключ>" "http://172.23.10.85:5000/api/depolimits"
@@ -48,6 +48,7 @@ curl -H "X-API-Key: <ваш ключ>" "http://172.23.10.85:5000/api/depolimits"
 
 | Данные | Признак принадлежности |
 |---|---|
+| Торговые счета (`GET /api/trdaccs`) | торговый счёт `TrdAccId` |
 | Позиции по инструментам (`/api/depolimits`) | торговый счёт `Trdacc` / `TRDACCID` |
 | Денежные позиции (`/api/moneylimits`) | тэг `Tag` / `TAG` |
 | Сделки (`GET /api/trades`) | класс `ClassCode` |
@@ -147,6 +148,8 @@ curl "http://172.23.10.85:5000/api/securities?ClassCode=TQBR&SecCode=GAZP"
 ## Торговые счета
 
 ### GET `/api/trdaccs`
+
+Торговые счета вашего депозитария (нужен `X-API-Key`).
 
 Параметры: `FirmId`.
 

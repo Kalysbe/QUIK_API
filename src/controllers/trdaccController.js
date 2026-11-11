@@ -1,6 +1,6 @@
 // src/controllers/trdaccController.js
 import Trdacc from "../models/Trdacc.js";
-import { Op } from "sequelize";
+import { filterRowsForAccess } from "../services/depositoryAccess.js";
 
 /* =========================
    GET /trdaccs
@@ -21,7 +21,8 @@ export async function getTrdaccs(req, res, next) {
       order: [["FirmId", "ASC"]],
     });
     
-    res.json(trdaccs);
+    // Депозитарий видит только свои счета (те же правила, что для DepoLimits.Trdacc).
+    res.json(filterRowsForAccess(req.access, trdaccs, "depo_account", "TrdAccId"));
   } catch (err) {
     next(err);
   }
