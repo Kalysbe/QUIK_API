@@ -36,6 +36,7 @@ import ordersRoutes from "./routes/ordersRoutes.js";
 import paramsRoutes from "./routes/paramsRoutes.js";
 import logsRoutes from "./routes/logsRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import apiKeyRoutes from "./routes/apiKeyRoutes.js";
 import { requireAdmin } from "./middleware/depositoryAuth.js";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -50,7 +51,7 @@ const app = express();
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, X-Requested-With");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept, X-Requested-With, X-API-Key");
   if (req.method === "OPTIONS") {
     return res.sendStatus(204);
   }
@@ -191,6 +192,7 @@ app.use("/api/params", paramsRoutes);
 // Логи содержат тела запросов/ответов всех депозитариев — только для администратора
 app.use("/api/logs", requireAdmin, logsRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/api-key", apiKeyRoutes);
 
 // Обработка 404
 app.use(notFoundHandler);
