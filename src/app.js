@@ -132,19 +132,58 @@ app.use(requestLogger);
  *                   example: ok
  *                 timestamp:
  *                   type: string
- *                   format: date-time
- *                 uptime:
- *                   type: number
- *                 environment:
+ *                   description: Время сервера (DD-MM-YYYY HH:mm:ss, Asia/Bishkek)
+ *                   example: "17-11-2026 13:28:56"
+ *                 timezone:
  *                   type: string
+ *                   example: Asia/Bishkek
+ *                 uptime:
+ *                   type: string
+ *                   description: Время работы с последнего запуска
+ *                   example: "4 д 22 ч 52 мин 49 с"
+ *                 uptime_seconds:
+ *                   type: integer
+ *                   example: 427969
  */
+const HEALTH_TIMEZONE = "Asia/Bishkek";
+
+function formatServerTime(date) {
+  // en-GB даёт DD/MM/YYYY, HH:mm:ss — приводим к принятому в API DD-MM-YYYY
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: HEALTH_TIMEZONE,
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", second: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(date)
+      .map((p) => [p.type, p.value])
+  );
+  return `${parts.day}-${parts.month}-${parts.year} ${parts.hour}:${parts.minute}:${parts.second}`;
+}
+
+function formatUptime(totalSeconds) {
+  const s = Math.floor(totalSeconds);
+  const units = [
+    [Math.floor(s / 86400), "д"],
+    [Math.floor((s % 86400) / 3600), "ч"],
+    [Math.floor((s % 3600) / 60), "мин"],
+    [s % 60, "с"],
+  ];
+  const first = units.findIndex(([v]) => v > 0);
+  return first === -1 ? "0 с" : units.slice(first).map(([v, u]) => `${v} ${u}`).join(" ");
+}
+
 app.get(["/health", "/api/health"], (req, res) => {
-  res.json({
+  const body = {
     status: "ok",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || "production"
-  });
+    timestamp: formatServerTime(new Date()),
+    timezone: HEALTH_TIMEZONE,
+    uptime: formatUptime(process.uptime()),
+    uptime_seconds: Math.floor(process.uptime()),
+  };
+  // С отступами — чтобы в браузере читалось без автоформатирования
+  res.type("application/json").send(JSON.stringify(body, null, 2));
 });
 
 
