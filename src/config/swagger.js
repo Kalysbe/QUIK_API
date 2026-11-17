@@ -39,6 +39,7 @@ const options = {
   apis: [
     join(__dirname, "../routes/*.js").replace(/\\/g, "/"),
     join(__dirname, "../controllers/*.js").replace(/\\/g, "/"),
+    join(__dirname, "../app.js").replace(/\\/g, "/"), // /health
   ],
 };
 

@@ -118,7 +118,7 @@ app.use(requestLogger);
  *   get:
  *     summary: Health check endpoint
  *     tags: [Health]
- *     description: Проверка работоспособности сервера. Доступен без проверки IP
+ *     description: Проверка работоспособности сервера. Доступен без ключа и без проверки IP. Также доступен как /api/health
  *     responses:
  *       200:
  *         description: Сервер работает
@@ -138,7 +138,7 @@ app.use(requestLogger);
  *                 environment:
  *                   type: string
  */
-app.get("/health", (req, res) => {
+app.get(["/health", "/api/health"], (req, res) => {
   res.json({
     status: "ok",
     timestamp: new Date().toISOString(),
